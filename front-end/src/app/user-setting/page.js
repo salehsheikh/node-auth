@@ -106,13 +106,21 @@ const UserSettings = () => {
 };
 
 
-  if (!user) {
-    return (
-      <div className="text-white text-center py-10">
-        Loading user data...
+ if (loading) {
+  return <div className="text-white text-center py-10">Loading user data...</div>;
+}
+
+if (!user) {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-white bg-black">
+      <div className="text-center space-y-2">
+        <h2 className="text-xl font-semibold text-red-400">You're not logged in</h2>
+        <p className="text-sm text-white/70">Please log in to access your settings.</p>
       </div>
-    );
-  }
+    </div>
+  );
+}
+
 
   return (
     <div className="text-white space-y-6 !bg-black p-4">
