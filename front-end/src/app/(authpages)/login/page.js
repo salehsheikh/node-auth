@@ -10,6 +10,7 @@ export default function Login() {
     email: '',
     password: '',
   });
+    const [loginError, setLoginError] = useState('');
   const { login } = useAuth();
   const router = useRouter();
 
@@ -22,6 +23,9 @@ export default function Login() {
     const result = await login(formData);
     if (result.success) {
       router.push('/dashboard');
+    }
+     else {
+      setLoginError(result.message || 'Invalid email or password');
     }
   };
 
@@ -58,6 +62,12 @@ export default function Login() {
               required
             />
           </div>
+                    {loginError && (
+            <div className="mb-4 text-red-500 text-sm text-center">
+              {loginError}
+            </div>
+          )}
+
           <button
             type="submit"
             className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"

@@ -1,16 +1,14 @@
 import bcrypt from 'bcrypt';
 import User from '../modals/userModal.js';
-import jwt from "jsonwebtoken";
 import Otp from '../modals/Otp.js'
 import { generateOTP } from '../utils/helper.js';
 import { sendOtpEmail } from '../utils/email.js';
 import asyncHandler from 'express-async-handler';
-import { generateAuthToken } from '../utils/tokenUtils.js';
+import { generateAuthToken, generateResetToken, verifyToken } from '../utils/tokenUtils.js';
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { userName, email, password } = req.body;
 
-  // Validate input
   if (!userName?.trim() || !email?.trim() || !password) {
     return res.status(400).json({ 
       success: false,
@@ -25,7 +23,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     return res.status(409).json({ 
@@ -34,7 +31,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // Create new user
   const user = await User.create({ userName, email, password });
 
   if (!user) {
@@ -122,11 +118,7 @@ export const requestPasswordResetOTP = async (req, res) => {
 
   try {
     const otp = generateOTP();
-
-    
     await Otp.deleteMany({ email });
-
-
     const otpDoc = new Otp({
       email,
       code: otp,
@@ -163,15 +155,9 @@ export const verifyOTP = async (req, res) => {
       return res.status(400).json({ message: 'OTP has expired.' });
     }
 
-    const resetToken = jwt.sign(
-      { email },
-      process.env.JWT_SECRET,
-      { expiresIn: '10m' }
-    );
+  const resetToken = generateResetToken(email);
 
-    await Otp.deleteOne({ email }); 
-    console.log(resetToken);
-    
+    await Otp.deleteOne({ email });     
     res.status(200).json({ message: 'OTP verified successfully.', resetToken });
   } catch (err) {
     console.error('OTP Verify Error:', err);
@@ -187,15 +173,16 @@ export const resetPassword = async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    const decoded = verifyToken(resetToken);
     const email = decoded.email;
 
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    const updateRes = await User.updateOne({ email }, { password: hashedPassword });
-
-    if (updateRes.modifiedCount === 0) {
-      return res.status(404).json({ message: 'User not found or password unchanged.' });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found.' });
     }
+
+    user.password = newPassword; 
+    await user.save();
 
     return res.status(200).json({ message: 'Password reset successful.' });
   } catch (err) {
@@ -203,3 +190,4 @@ export const resetPassword = async (req, res) => {
     return res.status(400).json({ message: 'Invalid or expired reset token.' });
   }
 };
+
