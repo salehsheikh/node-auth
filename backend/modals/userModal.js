@@ -4,8 +4,6 @@ const userSchema = new mongoose.Schema({
   userName: {
     type: String,
     required: [true, 'Username is required'],
-    trim: true,
-    unique:true,
     minlength: [3, 'Username must be at least 3 characters'],
     maxlength: [30, 'Username cannot exceed 30 characters']
   },
@@ -13,15 +11,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Email is required'],
     unique: true,
-    trim: true,
-    lowercase: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
   },
   password: {
     type: String,
     required: [true, 'Password is required'],
     minlength: [5, 'Password must be at least 8 characters'],
-    select: false
   },
   role: {
     type: String,
@@ -58,17 +53,7 @@ const userSchema = new mongoose.Schema({
   },
 }, {
   timestamps: true,
-  toJSON: {
-    virtuals: true,
-    transform: (doc, ret) => {
-      delete ret.password;
-      delete ret.__v;
-      return ret;
-    }
-  },
-  toObject: {
-    virtuals: true
-  }
+
 });
 
 userSchema.index({ role: 1 });

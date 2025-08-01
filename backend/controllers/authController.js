@@ -9,7 +9,7 @@ import { generateAuthToken, generateResetToken, verifyToken } from '../utils/tok
 export const registerUser = asyncHandler(async (req, res) => {
   const { userName, email, password } = req.body;
 
-  if (!userName?.trim() || !email?.trim() || !password) {
+  if (!userName || !email || !password) {
     return res.status(400).json({ 
       success: false,
       message: 'Please provide all required fields' 
@@ -73,7 +73,6 @@ export const authCheck = (asyncHandler(async (req, res) => {
   });
 }));
 
-
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -81,7 +80,7 @@ export const loginUser = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Please provide both email and password' });
   }
 
-  const user = await User.findOne({ email }).select('+password');
+  const user = await User.findOne({email});
 
   if (!user) {
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
