@@ -4,6 +4,7 @@ import { TbArrowBackUp } from "react-icons/tb";
 import { PiPencilSimpleLineThin } from "react-icons/pi";
 import Image from "next/image";
 import { useAuth } from "@/app/contexts/AuthContext";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const InputField = ({ label, type = "text", placeholder, value, onChange, name, disabled = false }) => (
   <div className="w-full md:w-1/2 text-sm text-white">
@@ -21,7 +22,7 @@ const InputField = ({ label, type = "text", placeholder, value, onChange, name, 
 );
 
 const UserSettings = () => {
-  const { user, updateProfile,uploadProfileImage } = useAuth();
+  const { user, updateProfile, uploadProfileImage } = useAuth();
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
@@ -54,73 +55,53 @@ const UserSettings = () => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  setSuccess('');
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-  const hasChanges = 
-    formData.userName !== user.userName ||
-    formData.location !== user.location ||
-    formData.bio !== user.bio;
+    const hasChanges = 
+      formData.userName !== user.userName ||
+      formData.location !== user.location ||
+      formData.bio !== user.bio;
 
-  if (!hasChanges) {
-    setLoading(false);
-    setSuccess('No changes to save');
-    setTimeout(() => setSuccess(''), 2000);
-    return;
-  }
+    if (!hasChanges) {
+      setLoading(false);
+      setSuccess('No changes to save');
+      setTimeout(() => setSuccess(''), 2000);
+      return;
+    }
 
-  try {
-    const response = await updateProfile(formData);
-    setSuccess('Profile updated successfully');
-    setTimeout(() => setSuccess(''), 3000);
-  } catch (err) {
-    setError(err.message || 'Failed to update profile');
-  } finally {
-    setLoading(false);
-  }
-};
-
+    try {
+      const response = await updateProfile(formData);
+      setSuccess('Profile updated successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleImageUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+    const file = e.target.files[0];
+    if (!file) return;
 
-  try {
-    setLoading(true);
-
-    const result = await uploadProfileImage(file); 
-
-    if (result.success) {
-      setSuccess(result.message);
-      setTimeout(() => setSuccess(''), 3000);
-    } else {
-      throw new Error(result.message);
+    try {
+      setLoading(true);
+      const result = await uploadProfileImage(file); 
+      if (result.success) {
+        setSuccess(result.message);
+        setTimeout(() => setSuccess(''), 3000);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
- if (loading) {
-  return <div className="text-white text-center py-10">Loading user data...</div>;
-}
-
-if (!user) {
-  return (
-    <div className="min-h-screen flex items-center justify-center text-white bg-black">
-      <div className="text-center space-y-2">
-        <h2 className="text-xl font-semibold text-red-400">You're not logged in</h2>
-        <p className="text-sm text-white/70">Please log in to access your settings.</p>
-      </div>
-    </div>
-  );
-}
-
+  };
 
   return (
     <div className="text-white space-y-6 !bg-black p-4">
@@ -157,7 +138,6 @@ if (!user) {
                   width={76}
                   height={76}
                   className="size-[76px] rounded-full object-cover"
-                
                 />
                 <div className="absolute bottom-0 right-0 bg-[#C5A713] size-[26px] rounded-full flex items-center justify-center group-hover:bg-[#e0c234] transition">
                   <PiPencilSimpleLineThin className="size-[18px]" />
@@ -246,4 +226,11 @@ if (!user) {
   );
 };
 
-export default UserSettings;
+// Wrap the component with ProtectedRoute
+export default function ProtectedUserSettings() {
+  return (
+    <ProtectedRoute>
+      <UserSettings />
+    </ProtectedRoute>
+  );
+}

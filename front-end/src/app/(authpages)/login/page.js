@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/app/contexts/AuthContext';
-
+import { FaFacebookF } from "react-icons/fa6";
+import { FaGoogle } from "react-icons/fa";
 export default function Login() {
+   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -75,6 +77,23 @@ export default function Login() {
             Login
           </button>
         </form>
+          <div className="flex flex-col space-y-4">
+      <a 
+        href={`${backendUrl}/api/auth/google`}
+        className="bg-red-500 text-white py-2 px-4 rounded flex items-center justify-center"
+      >
+        <FaGoogle className="mr-2" size={20} />
+        Continue with Google
+      </a>
+      
+      <a
+        href={`${backendUrl}/api/auth/facebook`}
+        className="bg-blue-600 text-white py-2 px-4 rounded flex items-center justify-center"
+      >
+        <FaFacebookF className="mr-2" size={20} />
+        Continue with Facebook
+      </a>
+    </div>
         <p className="mt-4 text-center">
           Don't have an account?{' '}
           <Link href="/signup" className="text-blue-500 hover:underline">

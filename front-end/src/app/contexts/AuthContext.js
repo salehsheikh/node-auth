@@ -9,6 +9,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [tempUser, setTempUser] = useState(null); 
   const router = useRouter();
 
   const backend_url = process.env.NEXT_PUBLIC_BACKEND_URL
@@ -24,33 +25,105 @@ useEffect(() => {
         console.error('Token invalid or expired:', err);
         logout(); 
       }
-    }
-    setLoading(false);
+    } 
+    setLoading(false); 
   };
 
   initializeAuth();
 }, []);
 
-const register = async (userData) => {
-  try {
-    const res = await axios.post(`${backend_url}/api/auth/register`, userData);
+ const register = async (userData) => {
+    try {
+      setError(null);
+      const res = await axios.post(`${backend_url}/api/auth/register`, userData);
 
-    if (res.data?.success && res.data?.user) {
-      setUser(res.data.user);
+      if (res.data?.success) {
+        setTempUser({
+          email: userData.email,
+          tempUserId: res.data.tempUserId
+        });
+        
+        return {
+          success: true,
+          message: res.data.message || 'OTP sent to your email for verification',
+          needsVerification: true
+        };
+      } else {
+        throw new Error(res.data?.message || 'Registration failed');
+      }
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Registration failed';
+
+      setError(errorMessage);
+
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
+  };
+  const resendVerificationOtp = async () => {
+    try {
+      if (!tempUser) {
+        throw new Error('No pending registration');
+      }
+
+      const res = await axios.post(`${backend_url}/api/auth/resend-verification`, {
+        email: tempUser.email,
+        tempUserId: tempUser.tempUserId
+      });
 
       return {
         success: true,
-        message: res.data.message || 'Registration successful',
+        message: res.data?.message || 'New OTP sent successfully'
+      };
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to resend OTP';
+
+      setError(errorMessage);
+
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
+  };
+const verifyRegistration = async (otpCode) => {
+  try {
+    if (!tempUser) {
+      throw new Error('No pending registration to verify');
+    }
+
+    const res = await axios.post(`${backend_url}/api/auth/verify-registration`, {
+      email: tempUser.email,
+      code: otpCode,
+      tempUserId: tempUser.tempUserId
+    });
+
+    if (res.data?.success) {
+      // Registration complete - set user data only
+      setUser(res.data.user);
+      setTempUser(null); // Clear temp user
+
+      return {
+        success: true,
+        message: res.data.message || 'Registration complete!',
         user: res.data.user
       };
     } else {
-      throw new Error(res.data?.message || 'Registration failed');
+      throw new Error(res.data?.message || 'Verification failed');
     }
   } catch (err) {
     const errorMessage =
       err.response?.data?.message ||
       err.message ||
-      'Registration failed';
+      'Verification failed';
 
     setError(errorMessage);
 
@@ -60,6 +133,7 @@ const register = async (userData) => {
     };
   }
 };
+
 
 
   // Login user
@@ -162,6 +236,8 @@ const register = async (userData) => {
         loading,
         error,
         register,
+        resendVerificationOtp,
+        verifyRegistration,
         login,
         logout,
         logout,

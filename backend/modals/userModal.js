@@ -18,6 +18,21 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: [5, 'Password must be at least 8 characters'],
   },
+  isVerified: {
+    type:Boolean,
+    default:false
+  },
+  lastVerificationAttempt: {
+  type: Date,
+  select: false
+},
+verificationAttempts: {
+  type: Number,
+  default: 0,
+  select: false,
+  max: 5 // Prevent brute force
+},
+
   role: {
     type: String,
     enum: {

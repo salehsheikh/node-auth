@@ -4,7 +4,9 @@ import profileRoutes from './routes/profileRoutes.js'
 import connect from './config/db.js'
 import dotenv from 'dotenv'
 import cors from 'cors'
+import './config/passportConfig.js';
 import cookieParser from 'cookie-parser'
+import passport from 'passport'
 const app= express();
 const port=5000;
 app.use(cors({
@@ -13,6 +15,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(passport.initialize());
 dotenv.config();
 connect()
   .then(() => {
