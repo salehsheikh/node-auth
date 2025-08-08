@@ -1,7 +1,7 @@
 import express from 'express';
 import {  authCheck, loginUser,  registerUser, requestPasswordResetOTP, resendRegistrationOtp, resetPassword, verifyOTP, verifyRegistration } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
-import { facebookCallback, facebookLogin, googleCallback, googleLogin, socialAuthSuccess } from '../controllers/socialAuthController.js';
+import { facebookCallback, facebookLogin, googleCallback, googleLogin, } from '../controllers/socialAuthController.js';
 const router = express.Router();
 
 router.post('/register', registerUser);
@@ -15,8 +15,8 @@ router.post('/reset-password',resetPassword);
 
 
 router.get('/google', googleLogin);
-router.get('/google/callback', googleCallback, socialAuthSuccess);
+router.get('/google/callback', googleCallback);
 
 router.get('/facebook', facebookLogin);
-router.get('/facebook/callback', facebookCallback, socialAuthSuccess);
+router.get('/facebook/callback', facebookCallback);
 export default router;

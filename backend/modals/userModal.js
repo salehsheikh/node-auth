@@ -15,8 +15,12 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
-    minlength: [5, 'Password must be at least 8 characters'],
+required: [
+    function () {
+      return this.provider === 'local';
+    },
+    'Password is required for local authentication',
+  ],    minlength: [5, 'Password must be at least 5 characters'],
   },
   isVerified: {
     type:Boolean,
@@ -41,6 +45,16 @@ verificationAttempts: {
     },
     default: 'user'
   },
+  provider: {
+      type: String,
+      enum: ['google', 'facebook', 'local'],
+      default: 'local',
+    },
+    providerId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows multiple null values for non-social-auth users
+    },
   profileImg: {
     type: String,
     default: '/images/usersaleh.jpg',
