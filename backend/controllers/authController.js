@@ -259,10 +259,16 @@ export const loginUser = asyncHandler(async (req, res) => {
 
   const token = generateAuthToken(user._id, user.role); 
 
+  res.cookie('jwt', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV !== 'development',
+    sameSite: 'strict',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
   res.status(200).json({
     success: true,
     message: 'Login successful',
-    token,
     user: {
       id: user._id,
       userName: user.userName,
@@ -275,7 +281,6 @@ export const loginUser = asyncHandler(async (req, res) => {
     }
   });
 });
-
 export const requestPasswordResetOTP = async (req, res) => {
   const { email } = req.body;
   

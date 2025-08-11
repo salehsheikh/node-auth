@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // Check for OAuth callback query parameters first
       const token = searchParams.get('token');
       const userData = searchParams.get('user');
       const authError = searchParams.get('error');
@@ -32,7 +31,7 @@ export const AuthProvider = ({ children }) => {
       if (token && userData) {
         try {
           const parsedUser = JSON.parse(decodeURIComponent(userData));
-          socialLogin(token, parsedUser);
+          setUser(parsedUser);
           setLoading(false);
           router.push('/user-setting');
           return;
@@ -45,23 +44,30 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // Fallback to localStorage if no OAuth callback
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-        try {
-          const res = await axios.get(`${backend_url}/api/auth/me`);
-          setUser(res.data.user);
-        } catch (err) {
-          console.error('Token invalid or expired:', err);
-          logout();
-        }
+      try {
+        const res = await axios.get(`${backend_url}/api/auth/me`, { withCredentials: true });
+        setUser(res.data.user);
+      } catch (err) {
+        console.error('Token invalid or expired:', err);
+        logout();
       }
       setLoading(false);
     };
 
     initializeAuth();
   }, [searchParams, router]);
+
+  const login = async (credentials) => {
+    try {
+      const res = await axios.post(`${backend_url}/api/auth/login`, credentials, { withCredentials: true });
+      setUser(res.data.user);
+      return { success: true, user: res.data.user };
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed');
+      return { success: false, message: err.response?.data?.message || 'Login failed' };
+    }
+  };
+
 
   const register = async (userData) => {
     try {
@@ -138,19 +144,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (credentials) => {
-    try {
-      const res = await axios.post(`${backend_url}/api/auth/login`, credentials);
-      localStorage.setItem('token', res.data.token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
-      setUser(res.data.user);
-      return { success: true, user: res.data.user };
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-      return { success: false, message: err.response?.data?.message || 'Login failed' };
-    }
-  };
-
+ 
   const socialLogin = (token, userData) => {
     localStorage.setItem('token', token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
