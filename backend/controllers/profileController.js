@@ -70,18 +70,49 @@ export const uploadProfileImage = asyncHandler(async (req, res) => {
   }
 
   // Delete old image if it exists
-  if (user.profileImg) {
-    const publicId = user.profileImg.split('/').pop().split('.')[0];
-    await cloudinary.uploader.destroy(`user-profiles/${publicId}`);
+ try {
+    // Delete old image if it exists
+    if (user.profileImg) {
+      const publicId = user.profileImg.split('/').pop().split('.')[0];
+      await cloudinary.uploader.destroy(`user-profiles/${publicId}`);
+    }
+
+    // Update user with new image URL from Cloudinary
+    user.profileImg = req.file.path; // Cloudinary URL from multer-storage-cloudinary
+    const updatedUser = await user.save();
+
+    console.log('Upload response:', {
+      success: true,
+      message: 'Image uploaded successfully',
+      user: {
+        _id: updatedUser._id,
+        userName: updatedUser.userName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        profileImg: updatedUser.profileImg,
+        location: updatedUser.location,
+        bio: updatedUser.bio,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      user: {
+        _id: updatedUser._id,
+        userName: updatedUser.userName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        profileImg: updatedUser.profileImg,
+        location: updatedUser.location,
+        bio: updatedUser.bio,
+      },
+    });
+  } catch (error) {
+    console.error('Image upload error:', error);
+    res.status(500);
+    throw new Error('Failed to upload image');
   }
-
-  user.profileImg = req.file.path;
-  await user.save();
-
-  res.json({
-    message: 'Image uploaded successfully',
-    imageUrl: req.file.path
-  });
 });
 
 

@@ -18,7 +18,7 @@ router.route('/')
   .put(protect, updateProfile);
 
 router.route('/upload-image')
-  .post(protect, upload.single('image'), uploadProfileImage);
+  .post(protect, upload.single('profileImg'), uploadProfileImage);
 
 router.route('/delete-image')
   .delete(protect, deleteProfileImage);

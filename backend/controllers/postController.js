@@ -28,22 +28,23 @@ export const getPosts = async (req, res) => {
       .populate("comments.user", "userName profileImg")
       .sort({ createdAt: -1 });
 
-   const postsWithOwnership = posts.map((post) => {
-  console.log("Comparing:", {
-    postUserId: post.user._id.toString(),
-    reqUserId: req.user ? req.user._id.toString() : "No user",
-  });
-  return {
-    ...post.toObject(),
-    isOwner: req.user ? post.user._id.toString() === req.user._id.toString() : false,
-  };
-});
+    const postsWithOwnership = posts.map((post) => {
+      return {
+        ...post.toObject(),
+        isOwner: req.user ? post.user._id.toString() === req.user._id.toString() : false,
+        comments: post.comments.map((comment) => ({
+          ...comment.toObject(),
+          isOwner: req.user ? comment.user._id.toString() === req.user._id.toString() : false,
+        })),
+      };
+    });
 
     res.json(postsWithOwnership);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 export const updatePost = async (req, res) => {
     try {
