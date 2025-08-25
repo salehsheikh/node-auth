@@ -2,6 +2,7 @@ import express from 'express'
 import authRoutes from './routes/authRoutes.js'
 import profileRoutes from './routes/profileRoutes.js'
 import postRoutes from './routes/postRoutes.js'
+import storyRoutes from './routes/storyRoutes.js'
 import connect from './config/db.js'
 import dotenv from 'dotenv'
 import cors from 'cors'
@@ -32,6 +33,7 @@ connect()
   app.use('/api/auth', authRoutes);
   app.use('/api/profile', profileRoutes);
   app.use('/api/posts',postRoutes);
+  app.use('/api/stories',storyRoutes);
   app.get("/", (req, res) => {
   res.status(200).json("HOME GET REQUEST");
 });

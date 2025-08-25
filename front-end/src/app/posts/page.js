@@ -5,6 +5,7 @@ import Image from "next/image"; // Use Next.js Image for optimized image renderi
 import { PiPencilSimpleLineThin } from "react-icons/pi"; 
 import { TbArrowBackUp } from "react-icons/tb"; 
 import { useAuth } from "../contexts/AuthContext";
+import Story from "../components/Story";
 
 export default function PostsPage() {
   const { posts, fetchPosts, createPost, likePost, addComment, updateComment, deleteComment, updatePost, deletePost } = usePosts();
@@ -89,7 +90,7 @@ export default function PostsPage() {
       {success && (
         <div className="p-3 bg-green-500/20 text-green-300 rounded-lg mb-4">{success}</div>
       )}
-
+<Story/>
       {/* Post Creation Form */}
       <form onSubmit={handleSubmit} className="mb-6 space-y-4 bg-[#FDDE4514] p-4 rounded-[20px] bg-glass">
         <div className="flex items-center gap-4 mb-4">

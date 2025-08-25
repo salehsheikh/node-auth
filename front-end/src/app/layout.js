@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PostProvider } from "./contexts/PostContext";
 import { Toaster } from "react-hot-toast";
+import { StoryProvider } from "./contexts/StoryContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,8 +28,10 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           <PostProvider>
+            <StoryProvider>
             {children}
             <Toaster position="top-right" />
+            </StoryProvider>
             </PostProvider>
         </AuthProvider>
       </body>

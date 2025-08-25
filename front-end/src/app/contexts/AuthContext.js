@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
+      setLoading(true);
       const token = searchParams.get('token');
       const userData = searchParams.get('user');
       const authError = searchParams.get('error');
