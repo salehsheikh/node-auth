@@ -6,6 +6,7 @@ import { PiPencilSimpleLineThin } from "react-icons/pi";
 import { TbArrowBackUp } from "react-icons/tb"; 
 import { useAuth } from "../contexts/AuthContext";
 import Story from "../components/Story";
+import { FaCheckCircle, FaRegCheckCircle } from "react-icons/fa";
 
 export default function PostsPage() {
   const { posts, fetchPosts, createPost, likePost, addComment, updateComment, deleteComment, updatePost, deletePost } = usePosts();
@@ -52,25 +53,55 @@ export default function PostsPage() {
   };
 
   // Handle adding a comment
-  const handleAddComment = (postId) => {
-    if (!commentInputs[postId]) return;
-    addComment(postId, commentInputs[postId]);
+ // Handle adding a comment
+const handleAddComment = async (postId) => {
+  if (!commentInputs[postId]) return;
+  try {
+    await addComment(postId, commentInputs[postId]); // wait for backend
     setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
-  };
+  } catch (err) {
+    console.error("Failed to add comment:", err);
+  }
+};
+
 
   // Save edited comment
-  const handleSaveComment = (postId, commentId) => {
-    if (!editingComment[commentId]) return;
-    updateComment(postId, commentId, editingComment[commentId]);
-    setEditingComment((prev) => ({ ...prev, [commentId]: "" }));
-  };
+const handleSaveComment = async (postId, commentId) => {
+  if (!editingComment[commentId]) return;
+  
+  console.log("Post ID:", postId);
+  console.log("Comment ID:", commentId);
+  console.log("Are they the same?", postId === commentId);
+  console.log("Editing text:", editingComment[commentId]);
+  
+  try {
+    await updateComment(postId, commentId, editingComment[commentId]);
+    setEditingComment((prev) => {
+      const copy = { ...prev };
+      delete copy[commentId];
+      return copy;
+    });
+  } catch (err) {
+    console.error("Failed to update comment:", err);
+  }
+};
 
-  // Save edited post
-  const handleSavePost = (postId) => {
-    if (!editingPost[postId]) return;
-    updatePost(postId, editingPost[postId]);
-    setEditingPost((prev) => ({ ...prev, [postId]: "" }));
-  };
+
+ // Save edited post
+const handleSavePost = async (postId) => {
+  if (!editingPost[postId]) return;
+  try {
+    await updatePost(postId, editingPost[postId]);
+    setEditingPost((prev) => {
+      const copy = { ...prev };
+      delete copy[postId]; // ✅ hide edit field
+      return copy;
+    });
+  } catch (err) {
+    console.error("Failed to update post:", err);
+  }
+};
+
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-black text-white">
@@ -110,6 +141,11 @@ export default function PostsPage() {
             </div>
           )}
           <p className="text-lg font-semibold">{user?.userName || "User"}</p>
+         {user?.isSubscribed && (
+      <FaCheckCircle
+      
+      className="text-blue-500 text-sm" title="Verified Subscriber" />
+    )}
         </div>
         <textarea
           className="w-full rounded-[10px] bg-white/20 p-3.5 font-medium resize-none min-h-[100px]"
@@ -170,6 +206,9 @@ export default function PostsPage() {
                   />
                 )}
                 <h2 className="font-semibold text-lg">{post.user?.userName}</h2>
+                {post.user?.isSubscribed && (
+        <FaCheckCircle className="text-blue-500 text-sm" title="Verified Subscriber" />
+      )}
               </div>
               <span className="text-sm text-white/70">{new Date(post.createdAt).toLocaleString()}</span>
             </div>
@@ -303,8 +342,11 @@ export default function PostsPage() {
                             className="size-8 rounded-full object-cover"
                           />
                         )}
-                        <div>
+                        <div className="flex items-center gap-1">
                           <span className="font-semibold">{comment.user?.userName || "Unknown"}:</span>
+                          {comment.user?.isSubscribed && (
+        <FaCheckCircle className="text-blue-500 text-xs" title="Verified Subscriber" />
+      )}
                           <span className="ml-1">{comment.text}</span>
                         </div>
                       </div>

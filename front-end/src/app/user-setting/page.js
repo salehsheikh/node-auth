@@ -5,6 +5,8 @@ import { PiPencilSimpleLineThin } from "react-icons/pi";
 import Image from "next/image";
 import { useAuth } from "@/app/contexts/AuthContext";
 import ProtectedRoute from "../components/ProtectedRoute";
+import SubscriptionPlans from "../components/SubscribeButton";
+import { FaCheckCircle } from "react-icons/fa";
 
 const InputField = ({ label, type = "text", placeholder, value, onChange, name, disabled = false }) => (
   <div className="w-full md:w-1/2 text-sm text-white">
@@ -20,7 +22,6 @@ const InputField = ({ label, type = "text", placeholder, value, onChange, name, 
     />
   </div>
 );
-
 const UserSettings = () => {
   const { user, updateProfile, uploadProfileImage } = useAuth();
   const [formData, setFormData] = useState({
@@ -45,7 +46,7 @@ const UserSettings = () => {
       });
     }
   }, [user]);
-
+console.log("sub user hai", user)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -105,6 +106,7 @@ const UserSettings = () => {
 
   return (
     <div className="text-white space-y-6 !bg-black p-4">
+      <SubscriptionPlans/>
       <div className="flex gap-2 items-start">
         <TbArrowBackUp className="size-6 cursor-pointer" onClick={() => window.history.back()} />
         <div>
@@ -126,8 +128,10 @@ const UserSettings = () => {
           {success}
         </div>
       )}
+      
 
       <form onSubmit={handleSubmit}>
+        
         <div className="flex flex-col xl:flex-row gap-[19px]">
           <div className="rounded-[20px] flex-1 bg-[#FDDE4514] bg-glass !px-5 py-[22px] space-y-3">
             <div className="flex items-center gap-4">
@@ -139,6 +143,7 @@ const UserSettings = () => {
                   height={76}
                   className="size-[76px] rounded-full object-cover"
                 />
+               
                 <div className="absolute bottom-0 right-0 bg-[#C5A713] size-[26px] rounded-full flex items-center justify-center group-hover:bg-[#e0c234] transition">
                   <PiPencilSimpleLineThin className="size-[18px]" />
                   <input
@@ -150,8 +155,16 @@ const UserSettings = () => {
                 </div>
               </div>
               <div>
+                
+ <div className="flex items-center gap-2">
                 <p className="text-2xl font-semibold">{user.userName}</p>
-                <p className="text-sm text-white/70 capitalize">{user.role}</p>
+                             
+
+                {/* Blue Tick next to username */}
+                {user.isSubscribed && (
+                  <FaCheckCircle className="text-white bg-blue-500 text-lg size-6 rounded-full" />
+                )}
+              </div>                <p className="text-sm text-white/70 capitalize">{user.role}</p>
               </div>
             </div>
 

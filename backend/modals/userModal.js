@@ -26,6 +26,10 @@ required: [
     type:Boolean,
     default:false
   },
+  isSubscribed: { type: Boolean, default: false },
+  subscriptionId: { type: String, default: null }, // Stripe subscription id
+  subscriptionPlan: { type: String, enum: ["monthly", "yearly", null], default: null },
+subscriptionEnd: { type: Date, default: null },
   lastVerificationAttempt: {
   type: Date,
   select: false

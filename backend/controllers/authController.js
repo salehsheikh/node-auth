@@ -215,7 +215,10 @@ export const authCheck = (asyncHandler(async (req, res) => {
       role: user.role,
       profileImg: user.profileImg,
       location: user.location,
-      bio: user.bio
+      bio: user.bio,
+      isSubscribed: user.isSubscribed || false, 
+        subscriptionPlan: user.subscriptionPlan || null, 
+        subscriptionEnd: user.subscriptionEnd || null 
     }
   });
 }));

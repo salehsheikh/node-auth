@@ -9,6 +9,8 @@ import cors from 'cors'
 import './config/passportConfig.js';
 import cookieParser from 'cookie-parser'
 import passport from 'passport'
+import { createCheckoutSession, stripeWebhook, verifySubscription } from './controllers/subscriptionController.js'
+import { protect } from './middleware/authMiddleware.js'
 const app= express();
 const port=5000;
 app.use(cors({
@@ -34,6 +36,9 @@ connect()
   app.use('/api/profile', profileRoutes);
   app.use('/api/posts',postRoutes);
   app.use('/api/stories',storyRoutes);
+  app.post("/webhook", express.raw({ type: "application/json" }), stripeWebhook);
+app.post("/api/stripe/create-checkout-session", createCheckoutSession);
+app.post("/api/stripe/verify-subscription", protect, verifySubscription);
   app.get("/", (req, res) => {
   res.status(200).json("HOME GET REQUEST");
 });

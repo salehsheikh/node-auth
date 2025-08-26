@@ -14,36 +14,52 @@ const protect = asyncHandler(async (req, res, next) => {
     console.log('Found Authorization header:', token);
   }
 
-  if (token) {
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      console.log('Decoded token:', decoded);
-      const user = await User.findById(decoded.id).select('-password');
-      if (!user) {
-        console.warn('User not found for ID:', decoded.id);
-      } else {
-        req.user = user;
-        console.log('req.user set:', user._id.toString());
-        const now = Date.now() / 1000;
-        if (decoded.exp - now < 86400) {
-          const newToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-          res.cookie('jwt', newToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV !== 'development',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-          });
-          console.log('Refreshed jwt cookie:', newToken);
-        }
-      }
-    } catch (err) {
-      console.error('Token verification error:', err.message);
-    }
-  } else {
+  if (!token) {
     console.warn('No token provided');
+    return res.status(401).json({
+      success: false,
+      message: 'Not authorized, no token'
+    });
   }
 
-  next();
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Decoded token:', decoded);
+    
+    const user = await User.findById(decoded.id).select('-password');
+    if (!user) {
+      console.warn('User not found for ID:', decoded.id);
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized, user not found'
+      });
+    }
+
+    req.user = user;
+    console.log('req.user set:', user._id.toString());
+
+    // Token refresh logic (optional)
+    const now = Date.now() / 1000;
+    if (decoded.exp - now < 86400) {
+      const newToken = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      res.cookie('jwt', newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== 'development',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      console.log('Refreshed jwt cookie:', newToken);
+    }
+
+    next(); // Only call next if authentication is successful
+
+  } catch (err) {
+    console.error('Token verification error:', err.message);
+    return res.status(401).json({
+      success: false,
+      message: 'Not authorized, token failed'
+    });
+  }
 });
 
 

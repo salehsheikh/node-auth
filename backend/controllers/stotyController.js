@@ -7,7 +7,7 @@ export const createStory = async (req, res) => {
 
     const story = await Story.create({
       user: req.user.id,
-      image: req.file.path, // Cloudinary gives this
+      image: req.file.path, 
       imageId: req.file.filename,
       caption: req.body.caption || "",
       expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000), // 12 hours

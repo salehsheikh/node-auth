@@ -1,6 +1,6 @@
 import Post from "../modals/Post.js";
 import cloudinary from "../utils/cloudinary.js";
-
+import asyncHandler from 'express-async-handler'
 export const createPost = async (req, res) => {
     try {
         let imageUrl = "";
@@ -24,8 +24,8 @@ export const createPost = async (req, res) => {
 export const getPosts = async (req, res) => {
   try {
     const posts = await Post.find()
-      .populate("user", "userName profileImg")
-      .populate("comments.user", "userName profileImg")
+      .populate("user", "userName profileImg isSubscribed")
+      .populate("comments.user", "userName profileImg isSubscribed")
       .sort({ createdAt: -1 });
 
     const postsWithOwnership = posts.map((post) => {
@@ -46,27 +46,37 @@ export const getPosts = async (req, res) => {
 };
 
 
-export const updatePost = async (req, res) => {
-    try {
-        const post = await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({ message: "Post not found" });
-        if (post.user.toString() !== req.user.id)
-            return res.status(403).json({ message: "Not Authorized" });
-        if (req.file) {
-            if (post.imageId) {
-                await cloudinary.uploader.destroy(post.imageId);
-
-            }
-            post.image = req.file.path;
-            post.imageId = req.file.filename;
-        }
-        post.text = req.body.text || post.text;
-        const updated = await post.save();
-        res.json(updated);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+export const updatePost = asyncHandler(async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    if (post.user.toString() !== req.user.id)
+      return res.status(403).json({ message: 'Not Authorized' });
+    if (req.file) {
+      if (post.imageId) {
+        await cloudinary.uploader.destroy(post.imageId);
+      }
+      post.image = req.file.path;
+      post.imageId = req.file.filename;
     }
-};
+    post.text = req.body.text || post.text;
+    const updated = await post.save();
+    // Populate user data in response
+    const populatedPost = await Post.findById(req.params.id)
+      .populate('user', 'userName profileImg isSubscribed')
+      .populate('comments.user', 'userName profileImg isSubscribed');
+    res.json({
+      ...populatedPost.toObject(),
+      isOwner: true,
+      comments: populatedPost.comments.map((comment) => ({
+        ...comment.toObject(),
+        isOwner: comment.user._id.toString() === req.user._id.toString(),
+      })),
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 
 export const deletePost= async(req,res)=>{
@@ -103,40 +113,67 @@ export const toggleLike= async(req,res)=>{
     }
 };
 
-export const addComment= async (req,res)=>{
-    try{
-        const {text}=req.body;
-        const post = await Post.findById(req.params.id);
-        if(!post) return res.status(404).json({message:"Post not found"});
-        post.comments.push({user:req.user.id, text});
-        await post.save();
-        res.json(post);
-
-    } catch(err){
-        res.status(500).json({message:err.message});
-    }
-};
-
-// Update Comment
-export const updateComment = async (req, res) => {
+export const addComment = asyncHandler(async (req, res) => {
   try {
-    const post = await Post.findById(req.params.postId);
-    if (!post) return res.status(404).json({ message: "Post not found" });
-
-    const comment = post.comments.id(req.params.commentId);
-    if (!comment) return res.status(404).json({ message: "Comment not found" });
-
-    if (comment.user.toString() !== req.user.id)
-      return res.status(403).json({ message: "Not authorized" });
-
-    comment.text = req.body.text || comment.text;
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ message: 'Comment text is required' });
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+    post.comments.push({ user: req.user.id, text });
     await post.save();
-
-    res.json(post);
+    const populatedPost = await Post.findById(req.params.id)
+      .populate('user', 'userName profileImg isSubscribed')
+      .populate('comments.user', 'userName profileImg isSubscribed');
+    res.json({
+      ...populatedPost.toObject(),
+      isOwner: post.user.toString() === req.user._id.toString(),
+      comments: populatedPost.comments.map((comment) => ({
+        ...comment.toObject(),
+        isOwner: comment.user._id.toString() === req.user._id.toString(),
+      })),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
-};
+});
+
+export const updateComment = asyncHandler(async (req, res) => {
+  try {
+    const { postId, commentId } = req.params;
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ message: 'Comment text is required' });
+
+    const post = await Post.findById(postId);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const comment = post.comments.id(commentId);
+    if (!comment) return res.status(404).json({ message: 'Comment not found' });
+
+    if (comment.user.toString() !== req.user.id)
+      return res.status(403).json({ message: 'Not authorized' });
+
+    comment.text = text;
+    comment.updatedAt = Date.now();
+    await post.save();
+
+    const populatedPost = await Post.findById(postId)
+      .populate('user', 'userName profileImg isSubscribed')
+      .populate('comments.user', 'userName profileImg isSubscribed');
+
+    const postWithOwnership = {
+      ...populatedPost.toObject(),
+      isOwner: req.user ? populatedPost.user._id.toString() === req.user._id.toString() : false,
+      comments: populatedPost.comments.map((comment) => ({
+        ...comment.toObject(),
+        isOwner: req.user ? comment.user._id.toString() === req.user._id.toString() : false,
+      })),
+    };
+
+    res.json(postWithOwnership);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // Delete Comment
 export const deleteComment = async (req, res) => {

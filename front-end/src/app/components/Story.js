@@ -140,27 +140,27 @@ const Story = () => {
 
               {/* Actions */}
               <div className="flex justify-between items-center mt-3">
+                
                 <button
                   onClick={() => toggleLikeStory(story._id)}
                   className="text-blue-500 hover:underline"
                 >
                   ❤️ {story.likes?.length || 0}
                 </button>
+ {user && story.user && String(story.user._id) === String(user._id) && (
+  <>
+    <span className="text-green-500">
+      👁️ {story.viewers?.length || 0}
+    </span>
+    <button
+      onClick={() => deleteStory(story._id)}
+      className="text-red-500 hover:underline"
+    >
+      🗑️ Delete
+    </button>
+  </>
+)}
 
-                <span className="text-green-500">
-                  👁️ {story.viewers?.length || 0}
-                </span>
-
-                {/* Delete only if story belongs to current user */}
-            {user && story.user && story.user._id && user.id && 
-                   String(story.user._id) === String(user.id) && (
-                    <button
-                      onClick={() => deleteStory(story._id)}
-                      className="text-red-500 hover:underline"
-                    >
-                      🗑️ Delete
-                    </button>
-                  )}
               </div>
             </div>
           ))

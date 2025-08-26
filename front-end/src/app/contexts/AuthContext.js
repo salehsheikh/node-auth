@@ -46,12 +46,17 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await axios.get(`${backend_url}/api/auth/me`, { withCredentials: true });
-        setUser(res.data.user);
-      } catch (err) {
-        console.error('Token invalid or expired:', err);
-        logout();
-      }
+  const res = await axios.get(`${backend_url}/api/auth/me`, { withCredentials: true });
+  const userData = res.data.user;
+  setUser({
+    ...userData,
+    _id: userData._id || userData.id,  // normalize
+  });
+} catch (err) {
+  console.error('Token invalid or expired:', err);
+  logout();
+}
+
       setLoading(false);
     };
 
