@@ -158,13 +158,27 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userData));
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
+  const logout = async () => {
+  try {
+    // Call backend logout endpoint to clear the JWT cookie
+    await axios.post(`${backend_url}/api/auth/logout`, {}, { 
+      withCredentials: true 
+    });
+  } catch (err) {
+    console.error('Logout error:', err);
+    // Even if backend logout fails, clear frontend state
+  } finally {
+    // Always clear frontend state
     setUser(null);
-    router.push('/login');
-  };
+    
+    // Clear any client-side storage
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
+    
+    // Clear cookies on client side too
+    document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  }
+};
 
   const requestResetOtp = async (email) => {
     try {

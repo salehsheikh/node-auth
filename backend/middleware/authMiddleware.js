@@ -8,7 +8,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
   if (req.cookies.jwt) {
     token = req.cookies.jwt;
-    console.log('Found jwt cookie:', token);
+    // console.log('Found jwt cookie:', token);
   } else if (req.headers.authorization?.startsWith('Bearer')) {
     token = req.headers.authorization.split(' ')[1];
     console.log('Found Authorization header:', token);
@@ -24,7 +24,7 @@ const protect = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Decoded token:', decoded);
+    // console.log('Decoded token:', decoded);
     
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
@@ -36,7 +36,7 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 
     req.user = user;
-    console.log('req.user set:', user._id.toString());
+    // console.log('req.user set:', user._id.toString());
 
     // Token refresh logic (optional)
     const now = Date.now() / 1000;

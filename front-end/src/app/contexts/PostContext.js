@@ -170,8 +170,7 @@ const updateComment = async (postId, commentId, text) => {
           ? {
               ...post, // Keep all existing post data
               likes: data.likes, // Only update the likes array
-              // If you need to update other fields from the response:
-              // ...data
+              
             }
           : post
       )

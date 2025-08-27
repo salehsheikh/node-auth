@@ -15,17 +15,20 @@ export const StoryProvider=({children})=>{
         fetchStories();
     },[]);
 
-    const fetchStories=async()=>{
-        try{
-            const{data}=await axios.get(`${backend_url}/api/stories`);
-            if(data.success){
-                setStories(data.stories);
-            }
-        } catch(err){
-            toast.error("Failed to load stories");
-            console.error("fetch stories error",err.response?.data || err.message);
+  const fetchStories = async () => {
+    try {
+        const { data } = await axios.get(`${backend_url}/api/stories`);
+        if (data.success) {
+            setStories(data.stories);
         }
-    };
+    } catch (err) {
+        // Don't show error for unauthorized requests
+        if (err.response?.status !== 401) {
+            toast.error("Failed to load stories");
+            console.error("fetch stories error", err.response?.data || err.message);
+        }
+    }
+};
 
     const createStory=async(formData)=>{
         try{

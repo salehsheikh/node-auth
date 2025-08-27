@@ -1,5 +1,5 @@
 import express from 'express';
-import {  authCheck, loginUser,  registerUser, requestPasswordResetOTP, resendRegistrationOtp, resetPassword, verifyOTP, verifyRegistration } from '../controllers/authController.js';
+import {  authCheck, loginUser,  logoutUser,  registerUser, requestPasswordResetOTP, resendRegistrationOtp, resetPassword, verifyOTP, verifyRegistration } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { facebookCallback, facebookLogin, googleCallback, googleLogin, } from '../controllers/socialAuthController.js';
 const router = express.Router();
@@ -9,6 +9,7 @@ router.post('/verify-registration',verifyRegistration);
 router.post('/resend-verification',resendRegistrationOtp)
 router.get('/me',protect, authCheck)
 router.post('/login',loginUser);
+router.post('/logout',logoutUser);
 router.post('/request-otp',requestPasswordResetOTP);
 router.post('/verify-otp',verifyOTP);
 router.post('/reset-password',resetPassword);

@@ -69,7 +69,6 @@ export const uploadProfileImage = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  // Delete old image if it exists
  try {
     // Delete old image if it exists
     if (user.profileImg) {

@@ -36,7 +36,7 @@ export default function Login() {
     setLoginError('');
     const result = await login(formData);
     if (result.success) {
-      router.push('/user-setting'); // Align with social login redirect
+      router.push('/posts'); // Align with social login redirect
     } else {
       setLoginError(result.message || 'Invalid email or password');
     }

@@ -284,6 +284,20 @@ export const loginUser = asyncHandler(async (req, res) => {
     }
   });
 });
+export const logoutUser = asyncHandler(async (req, res) => {
+  // Clear the JWT cookie
+  res.cookie('jwt', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV !== 'development',
+    sameSite: 'strict',
+    expires: new Date(0), // Set expiration to past date
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Logged out successfully'
+  });
+});
 export const requestPasswordResetOTP = async (req, res) => {
   const { email } = req.body;
   
