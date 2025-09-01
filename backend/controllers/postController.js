@@ -15,6 +15,20 @@ export const createPost = async (req, res) => {
             image: imageUrl,
             imageId,
         });
+        
+        // Populate the post with user data for the notification
+        const populatedPost = await Post.findById(post._id)
+            .populate("user", "userName profileImg isSubscribed");
+        
+        // Emit socket notification to all connected clients
+        const io = req.app.get('io');
+        if (io) {
+            io.emit('new-post', {
+                message: `${populatedPost.user.userName} created a new post`,
+                post: populatedPost
+            });
+        }
+        
         res.status(201).json(post);
     } catch (err) {
         res.status(500).json({ message:err.message });

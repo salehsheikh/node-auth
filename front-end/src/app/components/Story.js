@@ -3,10 +3,10 @@ import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useStories } from "../contexts/StoryContext";
 import { useAuth } from "../contexts/AuthContext";
-import { FiHeart, FiEye, FiTrash2, FiX, FiPlus } from "react-icons/fi";
+import { FiHeart, FiEye, FiTrash2, FiX, FiPlus, FiStar } from "react-icons/fi";
 
 const Story = () => {
-  const { stories, createStory, toggleLikeStory, deleteStory, viewStory } = useStories();
+  const { stories, createStory, toggleLikeStory, deleteStory, viewStory, highlights, addToHighlights ,  removeFromHighlights } = useStories();
   const { user, loading: authLoading } = useAuth();
 
   const [caption, setCaption] = useState("");
@@ -15,8 +15,13 @@ const Story = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [selectedStory, setSelectedStory] = useState(null);
   const [likeLoading, setLikeLoading] = useState(false);
+   const [highlightLoading, setHighlightLoading] = useState(false);
   const viewedStoriesRef = useRef(new Set());
 
+
+   const isInHighlights = (storyId) => {
+    return highlights.some(h => h.story?._id === storyId);
+  };
   // --- helpers
   const userIdStr = String(user?._id || "");
   const hasUserLiked = (story) =>
@@ -52,6 +57,21 @@ const Story = () => {
     setIsCreating(false);
   };
 
+
+    const handleToggleHighlight = async () => {
+    if (!selectedStory || highlightLoading) return;
+    
+    setHighlightLoading(true);
+    try {
+      if (isInHighlights(selectedStory._id)) {
+        await removeFromHighlights(selectedStory._id);
+      } else {
+        await addToHighlights(selectedStory._id);
+      }
+    } finally {
+      setHighlightLoading(false);
+    }
+  };
   // mark viewed once per session
   useEffect(() => {
     if (stories.length && user && !authLoading) {
@@ -104,6 +124,33 @@ const Story = () => {
 
   return (
     <div className="w-full p-4 bg-black text-white">
+ <div className="mb-6">
+        <h2 className="text-xl font-bold mb-3">Highlights</h2>
+        <div className="flex gap-4 overflow-x-auto">
+          {highlights.map((h) => (
+            <div
+              key={h._id}
+              className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer border-2 border-yellow-400 shrink-0"
+              onClick={() => setSelectedStory(h.story)}
+            >
+              {h.story?.image && (
+                <Image 
+                  src={h.story.image} 
+                  alt="highlight" 
+                  fill 
+                  className="object-cover" 
+                />
+              )}
+            </div>
+          ))}
+          {highlights.length === 0 && (
+            <p className="text-gray-500 text-sm flex items-center">
+              No highlights yet
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Stories</h2>
@@ -249,10 +296,24 @@ const Story = () => {
 >
   <FiTrash2 size={20} />
 </button>
-
+   <button
+                        onClick={handleToggleHighlight}
+                        disabled={highlightLoading}
+                        className={`p-2 rounded-full cursor-pointer ${
+                          isInHighlights(selectedStory._id) ? "text-yellow-500" : "text-white"
+                        } ${highlightLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                        title={isInHighlights(selectedStory._id) ? "Remove from highlights" : "Add to highlights"}
+                      >
+                        <FiStar
+                          size={20}
+                          fill={isInHighlights(selectedStory._id) ? "currentColor" : "none"}
+                        />
+                      </button>
                     </>
                   )}
                 </div>
+        
+
               </div>
             </div>
           </div>

@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from "react";
 import { TbArrowBackUp } from "react-icons/tb";
 import { PiPencilSimpleLineThin } from "react-icons/pi";
+import { IoIosNotifications } from "react-icons/io";
 import Image from "next/image";
 import { useAuth } from "@/app/contexts/AuthContext";
 import ProtectedRoute from "../components/ProtectedRoute";
 import SubscriptionPlans from "../components/SubscribeButton";
 import { FaCheckCircle } from "react-icons/fa";
+import { useSocket } from "../contexts/SocketContext";
 
 const InputField = ({ label, type = "text", placeholder, value, onChange, name, disabled = false }) => (
   <div className="w-full md:w-1/2 text-sm text-white">
@@ -22,8 +24,10 @@ const InputField = ({ label, type = "text", placeholder, value, onChange, name, 
     />
   </div>
 );
+
 const UserSettings = () => {
   const { user, updateProfile, uploadProfileImage } = useAuth();
+    const { notifications, clearNotifications } = useSocket();
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
@@ -34,6 +38,8 @@ const UserSettings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  
 
   useEffect(() => {
     if (user) {
@@ -44,9 +50,12 @@ const UserSettings = () => {
         location: user.location || '',
         bio: user.bio || ''
       });
+    
     }
   }, [user]);
-console.log("sub user hai", user)
+
+  console.log("sub user hai", user);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -104,9 +113,68 @@ console.log("sub user hai", user)
     }
   };
 
+
   return (
     <div className="text-white space-y-6 !bg-black p-4">
       <SubscriptionPlans/>
+      
+      {/* Notification Bell */}
+      <div className="fixed top-4 right-4 z-50">
+        <div className="relative">
+          <button 
+            onClick={() => setShowNotifications(!showNotifications)}
+            className="bg-[#C5A713] p-3 rounded-full hover:bg-[#e0c234] transition"
+          >
+            <IoIosNotifications className="text-white text-xl" />
+            {notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {notifications.length}
+              </span>
+            )}
+          </button>
+    {showNotifications && (
+            <div className="absolute right-0 mt-2 w-80 bg-[#1a1a1a] rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+              <div className="p-3 border-b border-gray-700 flex justify-between items-center">
+                <h3 className="font-semibold">Notifications</h3>
+                {notifications.length > 0 && (
+                  <button 
+                    onClick={clearNotifications}
+                    className="text-xs text-blue-400 hover:text-blue-300"
+                  >
+                    Clear all
+                  </button>
+                )}
+              </div>
+              
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <p className="p-4 text-center text-gray-400">No notifications</p>
+                ) : (
+                  notifications.map(notification => (
+                    <div key={notification.id} className="p-3 border-b border-gray-700 hover:bg-gray-800 transition">
+                      <p className="text-sm">{notification.message}</p>
+                      {notification.type === 'story' && (
+                        <span className="inline-block px-2 py-1 text-xs bg-purple-600 rounded-full mt-1">
+                          Story
+                        </span>
+                      )}
+                      {notification.type === 'post' && (
+                        <span className="inline-block px-2 py-1 text-xs bg-blue-600 rounded-full mt-1">
+                          Post
+                        </span>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(notification.timestamp).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="flex gap-2 items-start">
         <TbArrowBackUp className="size-6 cursor-pointer" onClick={() => window.history.back()} />
         <div>
@@ -156,15 +224,14 @@ console.log("sub user hai", user)
               </div>
               <div>
                 
- <div className="flex items-center gap-2">
-                <p className="text-2xl font-semibold">{user.userName}</p>
-                             
-
-                {/* Blue Tick next to username */}
-                {user.isSubscribed && (
-                  <FaCheckCircle className="text-white bg-blue-500 text-lg size-6 rounded-full" />
-                )}
-              </div>                <p className="text-sm text-white/70 capitalize">{user.role}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-semibold">{user.userName}</p>
+                  {/* Blue Tick next to username */}
+                  {user.isSubscribed && (
+                    <FaCheckCircle className="text-white bg-blue-500 text-lg size-6 rounded-full" />
+                  )}
+                </div>
+                <p className="text-sm text-white/70 capitalize">{user.role}</p>
               </div>
             </div>
 
