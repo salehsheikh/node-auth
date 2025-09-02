@@ -226,7 +226,6 @@ const UserSettings = () => {
                 
                 <div className="flex items-center gap-2">
                   <p className="text-2xl font-semibold">{user.userName}</p>
-                  {/* Blue Tick next to username */}
                   {user.isSubscribed && (
                     <FaCheckCircle className="text-white bg-blue-500 text-lg size-6 rounded-full" />
                   )}
@@ -306,7 +305,6 @@ const UserSettings = () => {
   );
 };
 
-// Wrap the component with ProtectedRoute
 export default function ProtectedUserSettings() {
   return (
     <ProtectedRoute>

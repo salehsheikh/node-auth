@@ -13,7 +13,7 @@ router.put("/:id/view",protect,viewStory);
 router.delete("/:id",protect,deleteStory);
 router.get("/highlights", protect, getHighlights);
 router.post("/:storyId/highlight", protect, addToHighlights);
-// In your routes file
+
 router.delete('/:storyId/highlight', protect, removeFromHighlights);
 
 export default router;

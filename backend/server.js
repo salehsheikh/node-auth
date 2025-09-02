@@ -41,7 +41,7 @@ app.use(cookieParser());
 // Attach io globally
 app.set('io', io);
 
-// Socket.io Events
+
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 

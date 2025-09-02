@@ -1,21 +1,9 @@
 'use client';
-
 import { useAuth } from '@/app/contexts/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 function DashboardContent() {
   const { user, logout } = useAuth();
-
-  if (!user || user.role !== 'admin') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-red-600">Access Denied</h1>
-          <p className="text-gray-600 mt-2">You must be an admin to access this page.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

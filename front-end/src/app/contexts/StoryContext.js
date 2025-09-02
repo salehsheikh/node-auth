@@ -92,34 +92,20 @@ export const StoryProvider = ({ children }) => {
       console.error("View story error:", err.response?.data || err.message);
     }
   };
-
-  const deleteStory = async (id) => {
-    try {
-      // First, find any highlights associated with this story
-      const storyHighlights = highlights.filter(h => h.story?._id === id);
-      
-      // Delete the story
-      await axios.delete(`${backend_url}/api/stories/${id}`);
-      
-      // Remove story from local state
-      setStories((prev) => prev.filter((s) => s._id !== id));
-      
-      // Remove any associated highlights from local state
-      if (storyHighlights.length > 0) {
-        setHighlights((prev) => prev.filter((h) => h.story?._id !== id));
-        
-        // Delete highlights from backend
-        for (const highlight of storyHighlights) {
-          await axios.delete(`${backend_url}/api/highlights/${highlight._id}`);
-        }
-      }
-      
-      toast.success("Story deleted");
-    } catch (err) {
-      toast.error("Failed to delete story");
-      console.error("Delete story error:", err.response?.data || err.message);
-    }
-  };
+const deleteStory = async (id) => {
+  try {
+    // Delete the story only
+    await axios.delete(`${backend_url}/api/stories/${id}`);
+    
+   
+    setStories((prev) => prev.filter((s) => s._id !== id));
+    
+    toast.success("Story deleted");
+  } catch (err) {
+    toast.error("Failed to delete story");
+    console.error("Delete story error:", err.response?.data || err.message);
+  }
+};
 
   const addToHighlights = async (id, title = "Highlights") => {
     try {
@@ -134,7 +120,6 @@ export const StoryProvider = ({ children }) => {
       );
       
       if (data.success) {
-        // Update highlights in context
         await fetchHighlights();
         toast.success("Added to highlights!");
         return data.highlight;
@@ -146,39 +131,48 @@ export const StoryProvider = ({ children }) => {
     }
   };
 
-  const fetchHighlights = async () => {
-    try {
-      const { data } = await axios.get(`${backend_url}/api/stories/highlights`);
-      if (data.success) {
-        setHighlights(data.highlights);
-      }
-    } catch (err) {
-      console.error("Error fetching highlights:", err);
+ const fetchHighlights = async () => {
+  try {
+    const { data } = await axios.get(`${backend_url}/api/stories/highlights`);
+    if (data.success) {
+      setHighlights(data.highlights);
     }
-  };
+  } catch (err) {
+    console.error("Error fetching highlights:", err);
+  }
+};
 
-  const removeFromHighlights = async (highlightId) => {
-    try {
-      const { data } = await axios.delete(
-        `${backend_url}/api/highlights/${highlightId}`
-      );
-      
-      if (data.success) {
-        // Update highlights in context
-        setHighlights((prev) => prev.filter((h) => h._id !== highlightId));
-        toast.success("Removed from highlights!");
-      }
-    } catch (err) {
-      console.error("Error removing from highlights:", err);
-      toast.error("Failed to remove from highlights");
+const removeFromHighlights = async (storyId) => {
+  try {
+    // Find the highlight ID first
+   const highlight = highlights.find(h => h.story === storyId);
+    
+    if (!highlight) {
+      toast.error("Highlight not found");
+      return;
     }
-  };
 
+    const { data } = await axios.delete(
+      `${backend_url}/api/stories/${storyId}/highlight`
+    );
+    
+    if (data.success) {
+     
+      setHighlights((prev) => prev.filter((h) => h._id !== highlight._id));
+      toast.success("Removed from highlights!");
+    }
+  } catch (err) {
+    console.error("Error removing from highlights:", err);
+    toast.error("Failed to remove from highlights");
+  }
+};
   // Helper function to find highlight ID by story ID
   const findHighlightIdByStoryId = (storyId) => {
-    const highlight = highlights.find(h => h.story?._id === storyId);
+    const highlight = highlights.find(h => h.story === storyId);
     return highlight ? highlight._id : null;
   };
+
+
 
   return (
     <StoryContext.Provider

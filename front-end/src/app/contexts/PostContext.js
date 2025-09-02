@@ -10,7 +10,7 @@ export const PostProvider = ({ children }) => {
   const backend_url = process.env.NEXT_PUBLIC_BACKEND_URL;
   const { user ,loading: authLoading} = useAuth(); 
   const [posts, setPosts] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [isLoading, setIsLoading] = useState(false); 
   const [error, setError] = useState(null);
 
  useEffect(() => {
@@ -45,7 +45,6 @@ export const PostProvider = ({ children }) => {
     }
   };
 console.log("usre in postcontext",user)
- // ✅ Fix createPost
 const createPost = async (formData) => {
   try {
     const { data } = await axios.post(`${backend_url}/api/posts`, formData, {
@@ -59,7 +58,7 @@ const createPost = async (formData) => {
         userName: user.userName,
         profileImg: user.profileImg,
       },
-      isOwner: true, // <-- Ensure edit/delete shows instantly
+      isOwner: true, 
     };
 
     setPosts((prev) => [newPost, ...prev]);
@@ -70,7 +69,6 @@ const createPost = async (formData) => {
   }
 };
 
-// ✅ Fix addComment
 const addComment = async (postId, text) => {
   try {
     const { data } = await axios.post(
@@ -78,23 +76,22 @@ const addComment = async (postId, text) => {
       { text }
     );
 
-    // Check what the API actually returns
     console.log("API response for addComment:", data);
 
     // If the API returns the entire post with populated comments
     if (data.comments && data.comments.length > 0) {
-      // Find the newly added comment (usually the last one)
+      
       const newComment = data.comments[data.comments.length - 1];
       
       setPosts((prev) =>
         prev.map((p) =>
           p._id === postId
-            ? { ...p, comments: data.comments } // Use all comments from API
+            ? { ...p, comments: data.comments } 
             : p
         )
       );
     } else {
-      // If API returns something else, fall back to your current approach
+      
       const newComment = {
         ...data,
         text,
@@ -129,13 +126,12 @@ const updateComment = async (postId, commentId, text) => {
       { text }
     );
     
-    // If the API returns the entire updated post
     if (data.comments) {
       setPosts((prev) =>
         prev.map((post) => (post._id === postId ? data : post))
       );
     } 
-    // If the API returns only the updated comment
+    
     else {
       setPosts((prev) =>
         prev.map((post) =>
@@ -168,7 +164,7 @@ const updateComment = async (postId, commentId, text) => {
       prev.map((post) =>
         post._id === id
           ? {
-              ...post, // Keep all existing post data
+              ...post, 
               likes: data.likes, // Only update the likes array
               
             }
@@ -191,7 +187,6 @@ const updateComment = async (postId, commentId, text) => {
       `${backend_url}/api/posts/${postId}/comments/${commentId}`
     );
     
-    // Properly update the state by filtering out the deleted comment
     setPosts((prev) =>
       prev.map((post) =>
         post._id === postId

@@ -11,7 +11,7 @@ const SubscriptionPlans = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`, // if using JWT
+        Authorization: `Bearer ${localStorage.getItem("token")}`, 
       },
       body: JSON.stringify({ plan }), // { plan: "monthly" } or { plan: "yearly" }
     });

@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePosts } from "../contexts/PostContext";
-import Image from "next/image"; // Use Next.js Image for optimized image rendering
-import { PiPencilSimpleLineThin } from "react-icons/pi"; 
+import Image from "next/image"; 
 import { TbArrowBackUp } from "react-icons/tb"; 
 import { useAuth } from "../contexts/AuthContext";
 import Story from "../components/Story";
@@ -22,10 +21,19 @@ export default function PostsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [expandedComments, setExpandedComments] = useState({});
 
   useEffect(() => {
     fetchPosts();
   }, []);
+
+  // Toggle comment expansion
+  const toggleComments = (postId) => {
+    setExpandedComments(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }));
+  };
 
   // Handle post image upload and submission
   const handleSubmit = async (e) => {
@@ -55,58 +63,56 @@ export default function PostsPage() {
     }
   };
 
- // Handle adding a comment
-const handleAddComment = async (postId) => {
-  if (!commentInputs[postId]) return;
-  try {
-    await addComment(postId, commentInputs[postId]); // wait for backend
-    setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
-  } catch (err) {
-    console.error("Failed to add comment:", err);
-  }
-};
-const startEditComment = (commentId, currentText) => {
-  setEditingCommentId(commentId);
-  setEditCommentText(currentText);
-};
-
-const cancelEditComment = () => {
-  setEditingCommentId(null);
-  setEditCommentText("");
-};
-
-const handleSaveComment = async (postId, commentId) => {
-  if (!editCommentText.trim()) return;
+  // Handle adding a comment
+  const handleAddComment = async (postId) => {
+    if (!commentInputs[postId]) return;
+    try {
+      await addComment(postId, commentInputs[postId]); // wait for backend
+      setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+    } catch (err) {
+      console.error("Failed to add comment:", err);
+    }
+  };
   
-  try {
-    await updateComment(postId, commentId, editCommentText);
+  const startEditComment = (commentId, currentText) => {
+    setEditingCommentId(commentId);
+    setEditCommentText(currentText);
+  };
+
+  const cancelEditComment = () => {
     setEditingCommentId(null);
     setEditCommentText("");
-  } catch (err) {
-    console.error("Failed to update comment:", err);
-  }
-};
+  };
 
+  const handleSaveComment = async (postId, commentId) => {
+    if (!editCommentText.trim()) return;
+    
+    try {
+      await updateComment(postId, commentId, editCommentText);
+      setEditingCommentId(null);
+      setEditCommentText("");
+    } catch (err) {
+      console.error("Failed to update comment:", err);
+    }
+  };
 
-
- // Save edited post
-const handleSavePost = async (postId) => {
-  if (!editingPost[postId]) return;
-  try {
-    await updatePost(postId, editingPost[postId]);
-    setEditingPost((prev) => {
-      const copy = { ...prev };
-      delete copy[postId]; // ✅ hide edit field
-      return copy;
-    });
-  } catch (err) {
-    console.error("Failed to update post:", err);
-  }
-};
-
+  // Save edited post
+  const handleSavePost = async (postId) => {
+    if (!editingPost[postId]) return;
+    try {
+      await updatePost(postId, editingPost[postId]);
+      setEditingPost((prev) => {
+        const copy = { ...prev };
+        delete copy[postId]; // ✅ hide edit field
+        return copy;
+      });
+    } catch (err) {
+      console.error("Failed to update post:", err);
+    }
+  };
 
   return (
-   <div className="max-w-2xl mx-auto p-4 bg-black text-white min-h-screen">
+    <div className="max-w-2xl mx-auto p-4 bg-black text-white min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6 sticky top-0 bg-black py-3 z-10">
         <button 
@@ -251,28 +257,27 @@ const handleSavePost = async (postId) => {
                 </div>
                 
                 {post.isOwner && (
-               <div className="relative group">
-  <button className="p-1 hover:bg-gray-800 rounded-full cursor-pointer">
-    <FiMoreHorizontal className="text-gray-400" />
-  </button>
+                  <div className="relative group">
+                    <button className="p-1 hover:bg-gray-800 rounded-full cursor-pointer">
+                      <FiMoreHorizontal className="text-gray-400" />
+                    </button>
 
-  {/* Dropdown */}
-  <div className="absolute right-0 top-8 bg-gray-800 rounded-lg shadow-lg py-1 z-10 hidden group-hover:block group-focus-within:block">
-    <button
-      onClick={() => setEditingPost({ [post._id]: post.text })}
-      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 w-full text-sm cursor-pointer"
-    >
-      <FiEdit className="text-sm" /> Edit
-    </button>
-    <button
-      onClick={() => deletePost(post._id)}
-      className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 w-full cursor-pointer text-sm text-red-400"
-    >
-      <FiTrash2 className="text-sm" /> Delete
-    </button>
-  </div>
-</div>
-
+                    {/* Dropdown */}
+                    <div className="absolute right-0 top-8 bg-gray-800 rounded-lg shadow-lg py-1 z-10 hidden group-hover:block group-focus-within:block">
+                      <button
+                        onClick={() => setEditingPost({ [post._id]: post.text })}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 w-full text-sm cursor-pointer"
+                      >
+                        <FiEdit className="text-sm" /> Edit
+                      </button>
+                      <button
+                        onClick={() => deletePost(post._id)}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-700 w-full cursor-pointer text-sm text-red-400"
+                      >
+                        <FiTrash2 className="text-sm" /> Delete
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -330,7 +335,6 @@ const handleSavePost = async (postId) => {
             )}
 
             {/* Post Actions */}
-
             <div className="p-4 pt-3 border-t border-gray-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 text-gray-400">
@@ -348,7 +352,11 @@ const handleSavePost = async (postId) => {
                     <span className="text-sm">{post.likes?.length || 0}</span>
                   </button>
                   
-                  <button className="flex items-center gap-1 hover:text-gray-300 cursor-pointer">
+                  {/* Make FiMessageCircle functional */}
+                  <button 
+                    onClick={() => toggleComments(post._id)}
+                    className="flex items-center gap-1 hover:text-gray-300 cursor-pointer"
+                  >
                     <FiMessageCircle />
                     <span className="text-sm">{post.comments?.length || 0}</span>
                   </button>
@@ -361,79 +369,100 @@ const handleSavePost = async (postId) => {
 
               {/* Comments Section */}
               <div className="mt-4 space-y-3">
-                {post.comments?.slice(0, 3).map((comment) => (
-   <div key={comment._id} className="flex items-start gap-2 group">
-  {comment.user?.profileImg && (
-    <Image
-      src={comment.user.profileImg}
-      alt={comment.user?.userName || "User profile"}
-      width={32}
-      height={32}
-      className="size-8 rounded-full object-cover flex-shrink-0"
-    />
-  )}
-  
-  <div className="flex-1 min-w-0">
-    <div className="flex items-center gap-2">
-      <span className="font-semibold text-sm">{comment.user?.userName}</span>
-      {comment.user?.isSubscribed && (
-        <FaCheckCircle className="text-blue-400 text-xs" />
-      )}
-    </div>
-    
-    {/* Edit Comment Input or Display */}
-    {editingCommentId === comment._id ? (
-      <div className="flex gap-2 mt-1">
-        <input
-          type="text"
-          value={editCommentText}
-          onChange={(e) => setEditCommentText(e.target.value)}
-          className="flex-1 bg-gray-800 rounded-lg px-3 py-1 text-sm outline-none"
-          autoFocus
-          onKeyPress={(e) => {
-            if (e.key === 'Enter') {
-              handleSaveComment(post._id, comment._id);
-            }
-          }}
-        />
-        <button
-          onClick={() => handleSaveComment(post._id, comment._id)}
-          className="px-3 py-1 bg-green-600 rounded-lg text-sm hover:bg-green-700 cursor-pointer"
-        >
-          Save
-        </button>
-        <button
-          onClick={cancelEditComment}
-          className="px-3 py-1 bg-gray-700 rounded-lg text-sm cursor-pointer hover:bg-gray-600"
-        >
-          Cancel
-        </button>
-      </div>
-    ) : (
-      <p className="text-sm text-gray-300">{comment.text}</p>
-    )}
-  </div>
-  
-  {comment.isOwner && editingCommentId !== comment._id && (
-    <div className="opacity-0 group-hover:opacity-100 transition flex gap-1">
-      <button
-        onClick={() => startEditComment(comment._id, comment.text)}
-        className="p-1 hover:bg-gray-800 rounded"
-        title="Edit comment"
-      >
-        <FiEdit className="text-xs cursor-pointer" />
-      </button>
-      <button
-        onClick={() => deleteComment(post._id, comment._id)}
-        className="p-1 hover:bg-gray-800 rounded text-red-400"
-        title="Delete comment"
-      >
-        <FiTrash2 className="text-xs cursor-pointer" />
-      </button>
-    </div>
-  )}
-</div>
-  ))}
+                {/* Show all comments if expanded, otherwise only first 3 */}
+                {post.comments?.slice(0, expandedComments[post._id] ? post.comments.length : 3).map((comment) => (
+                  <div key={comment._id} className="flex items-start gap-2 group">
+                    {comment.user?.profileImg && (
+                      <Image
+                        src={comment.user.profileImg}
+                        alt={comment.user?.userName || "User profile"}
+                        width={32}
+                        height={32}
+                        className="size-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    )}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm">{comment.user?.userName}</span>
+                        {comment.user?.isSubscribed && (
+                          <FaCheckCircle className="text-blue-400 text-xs" />
+                        )}
+                      </div>
+                      
+                      {/* Edit Comment Input or Display */}
+                      {editingCommentId === comment._id ? (
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="text"
+                            value={editCommentText}
+                            onChange={(e) => setEditCommentText(e.target.value)}
+                            className="flex-1 bg-gray-800 rounded-lg px-3 py-1 text-sm outline-none"
+                            autoFocus
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleSaveComment(post._id, comment._id);
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSaveComment(post._id, comment._id)}
+                            className="px-3 py-1 bg-green-600 rounded-lg text-sm hover:bg-green-700 cursor-pointer"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={cancelEditComment}
+                            className="px-3 py-1 bg-gray-700 rounded-lg text-sm cursor-pointer hover:bg-gray-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-300">{comment.text}</p>
+                      )}
+                    </div>
+                    
+                    {comment.isOwner && editingCommentId !== comment._id && (
+                      <div className="opacity-0 group-hover:opacity-100 transition flex gap-1">
+                        <button
+                          onClick={() => startEditComment(comment._id, comment.text)}
+                          className="p-1 hover:bg-gray-800 rounded"
+                          title="Edit comment"
+                        >
+                          <FiEdit className="text-xs cursor-pointer" />
+                        </button>
+                        <button
+                          onClick={() => deleteComment(post._id, comment._id)}
+                          className="p-1 hover:bg-gray-800 rounded text-red-400"
+                          title="Delete comment"
+                        >
+                          <FiTrash2 className="text-xs cursor-pointer" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Show "View more comments" if there are more than 3 comments and not expanded */}
+                {post.comments?.length > 3 && !expandedComments[post._id] && (
+                  <button
+                    onClick={() => toggleComments(post._id)}
+                    className="text-sm text-gray-400 hover:text-gray-300 cursor-pointer"
+                  >
+                    View all {post.comments.length} comments
+                  </button>
+                )}
+
+                {/* Show "View fewer comments" if expanded */}
+                {expandedComments[post._id] && post.comments?.length > 3 && (
+                  <button
+                    onClick={() => toggleComments(post._id)}
+                    className="text-sm text-gray-400 hover:text-gray-300 cursor-pointer"
+                  >
+                    Show fewer comments
+                  </button>
+                )}
 
                 {/* Add Comment */}
                 <div className="flex items-center gap-2 mt-3">

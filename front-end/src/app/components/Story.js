@@ -6,7 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { FiHeart, FiEye, FiTrash2, FiX, FiPlus, FiStar } from "react-icons/fi";
 
 const Story = () => {
-  const { stories, createStory, toggleLikeStory, deleteStory, viewStory, highlights, addToHighlights ,  removeFromHighlights } = useStories();
+  const { stories, createStory, toggleLikeStory, deleteStory, viewStory, highlights, addToHighlights, removeFromHighlights } = useStories();
   const { user, loading: authLoading } = useAuth();
 
   const [caption, setCaption] = useState("");
@@ -15,15 +15,16 @@ const Story = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [selectedStory, setSelectedStory] = useState(null);
   const [likeLoading, setLikeLoading] = useState(false);
-   const [highlightLoading, setHighlightLoading] = useState(false);
+  const [highlightLoading, setHighlightLoading] = useState(false);
   const viewedStoriesRef = useRef(new Set());
 
-
-   const isInHighlights = (storyId) => {
-    return highlights.some(h => h.story?._id === storyId);
-  };
   // --- helpers
   const userIdStr = String(user?._id || "");
+  
+  const isInHighlights = (storyId) => {
+    return highlights.some(h => h.story === storyId || h._id === storyId);
+  };
+
   const hasUserLiked = (story) =>
     Array.isArray(story?.likes) &&
     story.likes.some((id) => String(id) === userIdStr);
@@ -57,8 +58,7 @@ const Story = () => {
     setIsCreating(false);
   };
 
-
-    const handleToggleHighlight = async () => {
+  const handleToggleHighlight = async () => {
     if (!selectedStory || highlightLoading) return;
     
     setHighlightLoading(true);
@@ -72,6 +72,7 @@ const Story = () => {
       setHighlightLoading(false);
     }
   };
+
   // mark viewed once per session
   useEffect(() => {
     if (stories.length && user && !authLoading) {
@@ -84,14 +85,14 @@ const Story = () => {
     }
   }, [stories, user, viewStory, authLoading]);
 
-  // keep modal story in sync with context updates (e.g., likes from other places)
+  // keep modal story in sync with context updates
   useEffect(() => {
     if (!selectedStory) return;
     const latest = stories.find((s) => s._id === selectedStory._id);
     if (latest) setSelectedStory((prev) => ({ ...prev, ...latest }));
-  }, [stories, selectedStory?._id]); // safe optional chaining
+  }, [stories, selectedStory?._id]);
 
-  // optimistic like in modal (instant color change)
+  // optimistic like in modal
   const handleToggleLikeInModal = async () => {
     if (!selectedStory || !user) return;
     if (likeLoading) return;
@@ -124,23 +125,45 @@ const Story = () => {
 
   return (
     <div className="w-full p-4 bg-black text-white">
- <div className="mb-6">
+      {/* Highlights Section */}
+      <div className="mb-6">
         <h2 className="text-xl font-bold mb-3">Highlights</h2>
         <div className="flex gap-4 overflow-x-auto">
           {highlights.map((h) => (
             <div
               key={h._id}
               className="relative w-24 h-24 rounded-full overflow-hidden cursor-pointer border-2 border-yellow-400 shrink-0"
-              onClick={() => setSelectedStory(h.story)}
+              onClick={() => {
+                // Create a story-like object for the viewer
+                setSelectedStory({
+                  _id: h.story || h._id,
+                  image: h.image,
+                  caption: h.title,
+                  user: {
+                    _id: h.user,
+                    userName: h.userInfo?.userName || "User",
+                    profileImg: h.userInfo?.profileImg || "/default-avatar.png"
+                  },
+                  isHighlight: true // Flag to identify this is from highlights
+                });
+              }}
+              title={h.title}
             >
-              {h.story?.image && (
+              {h.image ? (
                 <Image 
-                  src={h.story.image} 
+                  src={h.image} 
                   alt="highlight" 
                   fill 
                   className="object-cover" 
                 />
+              ) : (
+                <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                  <FiX className="text-white text-2xl" />
+                </div>
               )}
+              
+              
+             
             </div>
           ))}
           {highlights.length === 0 && (
@@ -246,10 +269,15 @@ const Story = () => {
           </button>
 
           <div className="relative w-full h-full max-w-md mx-auto">
-            <Image src={selectedStory.image} alt="story" fill className="object-contain" />
+            <Image 
+              src={selectedStory.image} 
+              alt="story" 
+              fill 
+              className="object-contain" 
+            />
 
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-6">
-              {selectedStory.caption && (
+              {selectedStory.caption && selectedStory.caption !== "Highlights" && (
                 <p className="text-white text-lg mb-3">{selectedStory.caption}</p>
               )}
 
@@ -260,60 +288,88 @@ const Story = () => {
                     <Image
                       src={selectedStory.user?.profileImg || "/default-avatar.png"}
                       alt="profile"
-                      fill
+                      width={40}
+                      height={40}
                       className="rounded-full object-cover"
                     />
                   </div>
                   <span className="text-white font-medium">
-                    {selectedStory.user?.userName}
+                    {selectedStory.user?.userName || "User"}
                   </span>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center gap-3">
-                  <button
-                    onClick={handleToggleLikeInModal}
-                    disabled={likeLoading}
-                    className={`p-2 rounded-full cursor-pointer ${
-                      hasUserLiked(selectedStory) ? "text-pink-500" : "text-white"
-                    } ${likeLoading ? "opacity-60 cursor-not-allowed" : ""}`}
-                  >
-                    <FiHeart size={20} />
-                  </button>
+                  {/* Like button - only for actual stories, not highlights */}
+                  {!selectedStory.isHighlight && (
+                    <button
+                      onClick={handleToggleLikeInModal}
+                      disabled={likeLoading}
+                      className={`p-2 rounded-full cursor-pointer ${
+                        hasUserLiked(selectedStory) ? "text-pink-500" : "text-white"
+                      } ${likeLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                    >
+                      <FiHeart size={20} />
+                    </button>
+                  )}
 
-                  {user && selectedStory.user && String(selectedStory.user._id) === userIdStr && (
-                    <>
-                      <div className="flex items-center gap-1 text-white">
-                        <FiEye className="text-sm" />
-                        <span className="text-xs">{selectedStory.viewers?.length || 0}</span>
-                      </div>
-                   <button
-  onClick={async () => {
-    await deleteStory(selectedStory._id);
-    setSelectedStory(null); // 👈 close modal right after delete
-  }}
-  className="p-2 text-white hover:text-red-500 cursor-pointer"
->
-  <FiTrash2 size={20} />
-</button>
-   <button
-                        onClick={handleToggleHighlight}
-                        disabled={highlightLoading}
-                        className={`p-2 rounded-full cursor-pointer ${
-                          isInHighlights(selectedStory._id) ? "text-yellow-500" : "text-white"
-                        } ${highlightLoading ? "opacity-60 cursor-not-allowed" : ""}`}
-                        title={isInHighlights(selectedStory._id) ? "Remove from highlights" : "Add to highlights"}
-                      >
-                        <FiStar
-                          size={20}
-                          fill={isInHighlights(selectedStory._id) ? "currentColor" : "none"}
-                        />
-                      </button>
-                    </>
+                  {/* View count - only for actual stories */}
+                  {!selectedStory.isHighlight && user && selectedStory.user && String(selectedStory.user._id) === userIdStr && (
+                    <div className="flex items-center gap-1 text-white">
+                      <FiEye className="text-sm" />
+                      <span className="text-xs">{selectedStory.viewers?.length || 0}</span>
+                    </div>
+                  )}
+
+                  {/* Delete button - only for user's own stories */}
+                  {!selectedStory.isHighlight && user && selectedStory.user && String(selectedStory.user._id) === userIdStr && (
+                    <button
+                      onClick={async () => {
+                        await deleteStory(selectedStory._id);
+                        setSelectedStory(null);
+                      }}
+                      className="p-2 text-white hover:text-red-500 cursor-pointer"
+                    >
+                      <FiTrash2 size={20} />
+                    </button>
+                  )}
+
+                  {/* Highlight toggle - only for user's own stories */}
+                  {!selectedStory.isHighlight && user && selectedStory.user && String(selectedStory.user._id) === userIdStr && (
+                    <button
+                      onClick={handleToggleHighlight}
+                      disabled={highlightLoading}
+                      className={`p-2 rounded-full cursor-pointer ${
+                        isInHighlights(selectedStory._id) ? "text-yellow-500" : "text-white"
+                      } ${highlightLoading ? "opacity-60 cursor-not-allowed" : ""}`}
+                      title={isInHighlights(selectedStory._id) ? "Remove from highlights" : "Add to highlights"}
+                    >
+                      <FiStar
+                        size={20}
+                        fill={isInHighlights(selectedStory._id) ? "currentColor" : "none"}
+                      />
+                    </button>
+                  )}
+
+                  {/* Remove from highlights button - for highlights */}
+                  {selectedStory.isHighlight && user && (
+                    <button
+                      onClick={async () => {
+                        const highlight = highlights.find(h => 
+                          h.story === selectedStory._id || h._id === selectedStory._id
+                        );
+                        if (highlight) {
+                          await removeFromHighlights(highlight.story || highlight._id);
+                        }
+                        setSelectedStory(null);
+                      }}
+                      className="p-2 text-white hover:text-red-500 cursor-pointer"
+                      title="Remove from highlights"
+                    >
+                      <FiTrash2 size={20} />
+                    </button>
                   )}
                 </div>
-        
-
               </div>
             </div>
           </div>

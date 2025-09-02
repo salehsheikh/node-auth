@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       setLoading(true);
-      const token = searchParams.get('token');
+      const token = searchParams.get('token'); 
       const userData = searchParams.get('user');
       const authError = searchParams.get('error');
 
@@ -160,22 +160,20 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
   try {
-    // Call backend logout endpoint to clear the JWT cookie
+    
     await axios.post(`${backend_url}/api/auth/logout`, {}, { 
       withCredentials: true 
     });
   } catch (err) {
     console.error('Logout error:', err);
-    // Even if backend logout fails, clear frontend state
+ 
   } finally {
-    // Always clear frontend state
+  
     setUser(null);
-    
-    // Clear any client-side storage
+
     localStorage.removeItem('user');
     sessionStorage.removeItem('user');
-    
-    // Clear cookies on client side too
+
     document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
   }
 };

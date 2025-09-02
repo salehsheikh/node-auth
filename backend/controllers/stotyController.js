@@ -80,10 +80,7 @@ export const deleteStory = async (req, res) => {
     
     if (story.user.toString() !== req.user.id) return res.status(403).json({ message: "Not Authorized" });
     
-    // Delete associated highlights first
-    await Highlight.deleteMany({ story: req.params.id });
-    
-    // Then delete the story
+
     await cloudinary.uploader.destroy(story.imageId);
     await story.deleteOne();
     
@@ -95,19 +92,17 @@ export const deleteStory = async (req, res) => {
 
 export const addToHighlights = async (req, res) => {
   try {
-  
-    
     const { storyId } = req.params;
-    const story = await Story.findById(storyId);
+    const story = await Story.findById(storyId).populate("user", "userName profileImg");
+    
     if (!story) return res.status(404).json({ message: "Story not found" });
 
-    if (story.user.toString() !== req.user._id.toString()) {
+    if (story.user._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
     const title = req.body?.title || "Highlights";
 
-   
     let highlight = await Highlight.findOne({ 
       user: req.user._id, 
       story: storyId 
@@ -117,18 +112,15 @@ export const addToHighlights = async (req, res) => {
       highlight = await Highlight.create({
         user: req.user._id,
         story: storyId,
-        title: title, // safely extracted title
+        title: title,
+        // Save the image info independently
+        image: story.image,
+        imageId: story.imageId,
+        userInfo: {
+          userName: story.user.userName,
+          profileImg: story.user.profileImg
+        }
       });
-      
-      // Populate the response
-      highlight = await Highlight.findById(highlight._id)
-        .populate({
-          path: "story",
-          populate: {
-            path: "user",
-            select: "userName profileImg"
-          }
-        });
     }
 
     res.status(201).json({ success: true, highlight });
@@ -138,18 +130,11 @@ export const addToHighlights = async (req, res) => {
   }
 };
 
-
 export const getHighlights = async (req, res) => {
   try {
     const highlights = await Highlight.find({ user: req.user._id })
-      .populate({
-        path: "story",
-        populate: {
-          path: "user",
-          select: "userName profileImg"
-        }
-      })
       .sort({ createdAt: -1 });
+    
     res.json({ success: true, highlights });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
