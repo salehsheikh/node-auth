@@ -37,14 +37,12 @@ export const PostProvider = ({ children }) => {
       toast.error(errorMessage);
       console.error('Fetch posts error:', err.response?.data || err.message);
       if (err.response?.status === 401) {
-        // Redirect to login on unauthorized
         window.location.href = '/login?error=session_expired';
       }
     } finally {
       setIsLoading(false);
     }
   };
-console.log("usre in postcontext",user)
 const createPost = async (formData) => {
   try {
     const { data } = await axios.post(`${backend_url}/api/posts`, formData, {

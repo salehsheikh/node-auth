@@ -8,6 +8,7 @@ import Story from "../components/Story";
 import { FaCheckCircle } from "react-icons/fa";
 import { FiHeart, FiMessageCircle, FiShare, FiMoreHorizontal, FiEdit, FiTrash2, FiX, FiSend, FiImage } from 'react-icons/fi';
 import { formatDistanceToNow } from "date-fns";
+import Navbar from "../components/Navbar";
 
 export default function PostsPage() {
   const { posts, fetchPosts, createPost, likePost, addComment, updateComment, deleteComment, updatePost, deletePost } = usePosts();
@@ -114,21 +115,10 @@ export default function PostsPage() {
   return (
     <div className="max-w-2xl mx-auto p-4 bg-black text-white min-h-screen">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6 sticky top-0 bg-black py-3 z-10">
-        <button 
-          onClick={() => window.history.back()}
-          className="p-2 hover:bg-gray-800 cursor-pointer rounded-full transition"
-        >
-          <TbArrowBackUp className="size-5" />
-        </button>
-        <div>
-          <h2 className="text-xl font-bold">Posts</h2>
-          <p className="text-sm text-gray-400">Share your thoughts and ideas</p>
-        </div>
-      </div>
+     <Navbar/>
 
       {/* Post Creation Card */}
-      <div className="bg-gray-900 rounded-2xl p-4 mb-6">
+      <div className="bg-gray-900 rounded-2xl p-4 mb-6 mt-3">
         <div className="flex items-start gap-3 mb-4">
           {user?.profileImg ? (
             <Image
