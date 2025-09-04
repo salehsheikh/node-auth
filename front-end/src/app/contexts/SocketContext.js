@@ -1,8 +1,7 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
-import { useAuth } from './AuthContext';
-
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { io } from "socket.io-client";
+import { useAuth } from "./AuthContext";
 
 const SocketContext = createContext();
 
@@ -17,38 +16,40 @@ export const SocketProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      const newSocket = io('http://localhost:5000');
+      const newSocket = io("http://localhost:5000");
       setSocket(newSocket);
 
-      // Join user-specific room
-      newSocket.emit('join-user-room', user._id);
+      
+      newSocket.emit("join-user-room", user._id);
+      newSocket.on("new-post", (data) => {
+        // Skip if the post is by the current user
+        if (data.post.user._id === user._id) return;
 
-      // Listen for events
-      newSocket.on('new-post', (data) => {
-        console.log('New post notification:', data);
-        setNotifications(prev => [
+        console.log("New post notification:", data);
+        setNotifications((prev) => [
           {
             id: Date.now(),
             message: data.message,
             post: data.post,
             timestamp: new Date(),
-            type: 'post'
+            type: "post",
           },
-          ...prev
+          ...prev,
         ]);
       });
 
-      newSocket.on('new-story', (data) => {
-        console.log('New story notification:', data);
-        setNotifications(prev => [
+      newSocket.on("new-story", (data) => {
+        if (data.story.user._id === user._id) return;
+        console.log("New story notification:", data);
+        setNotifications((prev) => [
           {
             id: Date.now(),
             message: data.message,
             story: data.story,
             timestamp: new Date(),
-            type: 'story'
+            type: "story",
           },
-          ...prev
+          ...prev,
         ]);
       });
 
@@ -62,16 +63,7 @@ export const SocketProvider = ({ children }) => {
     setNotifications([]);
   };
 
-  const value = {
-    socket,
-    notifications,
-    setNotifications,
-    clearNotifications
-  };
+  const value = { socket, notifications, setNotifications, clearNotifications };
 
-  return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
-  );
+  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 };

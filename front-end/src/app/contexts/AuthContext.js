@@ -15,64 +15,80 @@ export const AuthProvider = ({ children }) => {
 
   const backend_url = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  useEffect(() => {
-    const initializeAuth = async () => {
-      setLoading(true);
-      const token = searchParams.get('token'); 
-      const userData = searchParams.get('user');
-      const authError = searchParams.get('error');
+ useEffect(() => {
+  const initializeAuth = async () => {
+    setLoading(true);
+    const token = searchParams.get('token');
+    const userData = searchParams.get('user');
+    const authError = searchParams.get('error');
 
-      if (authError) {
-        setError(decodeURIComponent(authError));
+    if (authError) {
+      setError(decodeURIComponent(authError));
+      setLoading(false);
+      router.push(`/login?error=${authError}`);
+      return;
+    }
+
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(decodeURIComponent(userData));
+        
+        // CRITICAL: Store the token in a cookie for future requests
+        document.cookie = `jwt=${token}; path=/; max-age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'secure; sameSite=strict' : ''}`;
+        
+        setUser(parsedUser);
         setLoading(false);
-        router.push(`/login?error=${authError}`);
+        
+        // Remove token from URL for security
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      } catch (err) {
+        console.error('Error parsing OAuth user data:', err);
+        setError('Invalid OAuth data');
+        setLoading(false);
+        router.push('/login?error=invalid_oauth_data');
         return;
       }
-
-      if (token && userData) {
-        try {
-          const parsedUser = JSON.parse(decodeURIComponent(userData));
-          setUser(parsedUser);
-          setLoading(false);
-          router.push('/user-setting');
-          return;
-        } catch (err) {
-          console.error('Error parsing OAuth user data:', err);
-          setError('Invalid OAuth data');
-          setLoading(false);
-          router.push('/login?error=invalid_oauth_data');
-          return;
-        }
-      }
-
-      try {
-  const res = await axios.get(`${backend_url}/api/auth/me`, { withCredentials: true });
-  const userData = res.data.user;
-  setUser({
-    ...userData,
-    _id: userData._id || userData.id,  // normalize
-  });
-} catch (err) {
-  console.error('Token invalid or expired:', err);
-  logout();
-}
-
-      setLoading(false);
-    };
-
-    initializeAuth();
-  }, [searchParams, router]);
-
-  const login = async (credentials) => {
-    try {
-      const res = await axios.post(`${backend_url}/api/auth/login`, credentials, { withCredentials: true });
-      setUser(res.data.user);
-      return { success: true, user: res.data.user };
-    } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-      return { success: false, message: err.response?.data?.message || 'Login failed' };
     }
+
+    try {
+      const res = await axios.get(`${backend_url}/api/auth/me`, { 
+        withCredentials: true 
+      });
+      const userData = res.data.user;
+      setUser({
+        ...userData,
+        _id: userData._id || userData.id,
+      });
+    } catch (err) {
+      console.error('Token invalid or expired:', err);
+      logout();
+    }
+
+    setLoading(false);
   };
+
+  initializeAuth();
+}, [searchParams, router]);
+
+ const login = async (credentials) => {
+  try {
+    const res = await axios.post(`${backend_url}/api/auth/login`, credentials, { 
+      withCredentials: true 
+    });
+    
+    // Make sure the cookie is set for immediate use
+    if (res.data.token) {
+      document.cookie = `jwt=${res.data.token}; path=/; max-age=${7 * 24 * 60 * 60}; ${process.env.NODE_ENV === 'production' ? 'secure; sameSite=strict' : ''}`;
+    }
+    
+    setUser(res.data.user);
+    return { success: true, user: res.data.user };
+  } catch (err) {
+    setError(err.response?.data?.message || 'Login failed');
+    return { success: false, message: err.response?.data?.message || 'Login failed' };
+  }
+};
 
 
   const register = async (userData) => {
