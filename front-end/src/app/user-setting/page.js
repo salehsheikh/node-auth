@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useAuth } from "@/app/contexts/AuthContext";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { FaCheckCircle, FaUser, FaEnvelope, FaMapMarkerAlt, FaBriefcase, FaInfoCircle } from "react-icons/fa";
+import FollowButton from "../components/FollowButton";
 
 const InputField = ({ label, type = "text", placeholder, value, onChange, name, disabled = false, icon }) => (
   <div className="w-full text-sm">
@@ -299,6 +300,7 @@ const UserSettings = () => {
             </div>
           </div>
         </form>
+       
       </div>
     </div>
   );

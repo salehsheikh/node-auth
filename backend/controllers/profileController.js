@@ -23,6 +23,27 @@ export const getProfile = asyncHandler(async (req, res) => {
   });
 });
 
+export const getUserProfile= asyncHandler(async (req,res)=>{
+  const user= await  User.findById(req.params.id)
+  .select("-password -__v  -updatedAt");
+  if (!user){
+    res.status(404);
+    throw new Error("User not found");
+  }
+  res.json({
+    _id:user._id,
+    userName:user.userName,
+    profileImg:user.profileImg,
+    location:user.location,
+    bio:user.bio,
+    isVerified:user.isVerified || false,
+    followersCount: user.followersCount || 0,
+    followingCount: user.followingCount || 0,
+    createdAt:user.createdAt,
+    email:user.email
+    
+  });
+});
 
 export const updateProfile = asyncHandler(async (req, res) => {
   const { userName, location, bio, } = req.body;

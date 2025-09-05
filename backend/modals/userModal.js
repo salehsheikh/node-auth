@@ -41,6 +41,16 @@ verificationAttempts: {
   max: 5 // Prevent brute force
 },
 
+followersCount:{
+type: Number,
+default:0
+},
+
+followingCount:{
+type: Number,
+default:0
+},
+
   role: {
     type: String,
     enum: {
@@ -61,7 +71,7 @@ verificationAttempts: {
     },
   profileImg: {
     type: String,
-    default: '/images/usersaleh.jpg',
+    default: '/images/user.png',
     validate: {
       validator: (value) => {
         try {

@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import { usePosts } from "../contexts/PostContext";
 import Image from "next/image"; 
-import { TbArrowBackUp } from "react-icons/tb"; 
 import { useAuth } from "../contexts/AuthContext";
 import Story from "../components/Story";
 import { FaCheckCircle } from "react-icons/fa";
 import { FiHeart, FiMessageCircle, FiShare, FiMoreHorizontal, FiEdit, FiTrash2, FiX, FiSend, FiImage } from 'react-icons/fi';
 import { formatDistanceToNow } from "date-fns";
 import Navbar from "../components/Navbar";
+import Link from "next/link";
 
 export default function PostsPage() {
   const { posts, fetchPosts, createPost, likePost, addComment, updateComment, deleteComment, updatePost, deletePost } = usePosts();
@@ -215,37 +215,42 @@ export default function PostsPage() {
       )}
 
       <Story />
+  
 
       {/* Posts Feed */}
       <div className="space-y-5">
-        {posts.map((post) => (
+        {posts.map((post) => {
+    const isOwnProfile = user?._id === post.user?._id;
+    const linkHref = isOwnProfile ? "/user-setting" : `/profile/${post.user._id}`;
+     return(
           <div key={post._id} className="bg-gray-900 rounded-2xl overflow-hidden">
             {/* Post Header */}
             <div className="p-4 pb-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {post.user?.profileImg && (
-                    <Image
-                      src={post.user.profileImg}
-                      alt={post.user?.userName || "User profile"}
-                      width={40}
-                      height={40}
-                      className="size-10 rounded-full object-cover"
-                    />
-                  )}
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{post.user?.userName}</h3>
-                      {post.user?.isSubscribed && (
-                        <FaCheckCircle className="text-blue-400 text-xs" />
-                      )}
-                    </div>
-                    <span className="text-xs text-gray-400">
-                      {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-                    </span>
-                  </div>
-                </div>
-                
+                  <Link href={linkHref}>
+      <div className="flex items-center gap-3 cursor-pointer">
+        {post.user?.profileImg && (
+          <Image
+            src={post.user.profileImg}
+            alt={post.user?.userName || "User profile"}
+            width={40}
+            height={40}
+            className="size-10 rounded-full object-cover"
+          />
+        )}
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold">{post.user?.userName}</h3>
+            {post.user?.isSubscribed && (
+              <FaCheckCircle className="text-blue-400 text-xs" />
+            )}
+          </div>
+          <span className="text-xs text-gray-400">
+            {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+          </span>
+        </div>
+      </div>
+    </Link>
                 {post.isOwner && (
                   <div className="relative group">
                     <button className="p-1 hover:bg-gray-800 rounded-full cursor-pointer">
@@ -502,7 +507,7 @@ export default function PostsPage() {
               </div>
             </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );

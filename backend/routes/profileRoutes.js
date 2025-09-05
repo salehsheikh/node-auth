@@ -3,7 +3,8 @@ import {
   getProfile, 
   updateProfile, 
   uploadProfileImage,
-  deleteProfileImage
+  deleteProfileImage,
+  getUserProfile
 } from '../controllers/profileController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { storage } from '../utils/cloudinary.js';
@@ -16,7 +17,7 @@ const router = express.Router();
 router.route('/')
   .get(protect, getProfile)
   .put(protect, updateProfile);
-
+router.get("/:id",protect , getUserProfile)
 router.route('/upload-image')
   .post(protect, upload.single('profileImg'), uploadProfileImage);
 

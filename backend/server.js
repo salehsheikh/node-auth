@@ -3,6 +3,7 @@ import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import postRoutes from './routes/postRoutes.js';
 import storyRoutes from './routes/storyRoutes.js';
+import followRoutes from './routes/followRoutes.js'
 import connect from './config/db.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -60,6 +61,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/stories', storyRoutes);
+app.use('/api/follow', followRoutes);
 
 // Stripe Routes
 app.post("/webhook", express.raw({ type: "application/json" }), stripeWebhook);
