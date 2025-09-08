@@ -1,4 +1,6 @@
+import Follow from "../modals/followModel.js";
 import Highlight from "../modals/Highlight.js";
+import Notification from "../modals/NotificationModel.js";
 import Story from "../modals/Story.js";
 import cloudinary from "../utils/cloudinary.js";
 
@@ -13,17 +15,48 @@ export const createStory = async (req, res) => {
       caption: req.body.caption || "",
       expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000), // 12 hours
     });
-  const populatedStory= await Story.findById(story._id)
-  .populate ("user", "userName profileImg isSubscribed");
 
-  const io= req.app.get('io');
-  if(io){
-    io.emit('new-story',{
-      message:`${populatedStory.user.userName} created a new story`,
-      story:populatedStory
+    const populatedStory = await Story.findById(story._id)
+      .populate("user", "userName profileImg isSubscribed");
+
+const followers = await Follow.find({ following: req.user.id })
+  .populate("follower", "_id");
+
+const followerIds = followers.map(f => f.follower._id);
+
+// Create notifications for each follower
+const notificationPromises = followerIds.map(fid => 
+  Notification.create({
+    recipient: fid,
+    sender: req.user.id,
+    type: 'story',
+    message: `${populatedStory.user.userName} posted a new story`,
+    relatedItem: story._id,
+    itemType: 'story',
+    read: false
+  })
+);
+
+await Promise.all(notificationPromises);
+
+// Emit notifications
+const io = req.app.get('io');
+if (io) {
+  followerIds.forEach(fid => {
+    io.to(fid.toString()).emit('new-notification', {
+      message: `${populatedStory.user.userName} posted a new story`,
+      type: 'story'
     });
-  }
-    res.status(201).json(story);
+  });
+
+  io.emit('new-story', {
+    message: `${populatedStory.user.userName} created a new story`,
+    story: populatedStory
+  });
+}
+
+
+    res.status(201).json(populatedStory);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

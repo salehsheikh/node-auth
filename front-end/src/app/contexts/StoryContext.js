@@ -58,6 +58,7 @@ export const StoryProvider = ({ children }) => {
     } catch (err) {
       toast.error("Failed to Create story");
       console.error("Create story error", err.response?.data || err.message);
+      
     }
   };
 

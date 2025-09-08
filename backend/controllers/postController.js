@@ -1,4 +1,7 @@
+import Follow from "../modals/followModel.js";
+import Notification from "../modals/NotificationModel.js";
 import Post from "../modals/Post.js";
+import User from "../modals/userModal.js";
 import cloudinary from "../utils/cloudinary.js";
 import asyncHandler from 'express-async-handler'
 export const createPost = async (req, res) => {
@@ -19,17 +22,40 @@ export const createPost = async (req, res) => {
         // Populate the post with user data for the notification
         const populatedPost = await Post.findById(post._id)
             .populate("user", "userName profileImg isSubscribed");
-        
-        // Emit socket notification to all connected clients
+            const followers= await Follow.find({following:req.user.id})
+            .populate("follower" , "_id");
+            const followesIds= followers.map(f=> f.follower._id);
+
+        const notificationPromises= followesIds.map(fid=>
+          Notification.create({
+            recipient:fid,
+            sender:req.user.id,
+            type:'post',
+            message:`${populatedPost.user.userName} posted a new post`,
+            relatedItem:post._id,
+            itemType:'post',
+            read:false
+          })
+        );
+        await Promise.all(notificationPromises);
+
         const io = req.app.get('io');
-        if (io) {
-            io.emit('new-post', {
-                message: `${populatedPost.user.userName} created a new post`,
-                post: populatedPost
+        if (io){
+          followesIds.forEach(fid=>{
+            io.to(fid.toString()).emit('new-notification', {
+              message:`${populatedPost.user.userName} created a new post`,
+              type:'post'
             });
+          });
+
+          io.emit('new-post',{
+             message:`${populatedPost.user.userName} created a new post`,
+             post:populatedPost
+          });
         }
         
-        res.status(201).json(post);
+        
+        res.status(201).json(populatedPost);
     } catch (err) {
         res.status(500).json({ message:err.message });
     }
@@ -111,33 +137,94 @@ export const deletePost= async(req,res)=>{
     }
 };
 
-export const toggleLike= async(req,res)=>{
-    try{
-        const post=await Post.findById(req.params.id);
-        if (!post) return res.status(404).json({message:"Post not found"});
-        if (post.likes.includes(req.user.id)){
-            post.likes=post.likes.filter((id)=>id.toString() !== req.user.id);
-        }else{
-            post.likes.push(req.user.id);
+export const toggleLike = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate("user", "userName profileImg");
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    let message = "";
+    if (post.likes.includes(req.user.id)) {
+      post.likes = post.likes.filter((id) => id.toString() !== req.user.id);
+      message = "Post unliked";
+    } else {
+      post.likes.push(req.user.id);
+      message = "Post liked";
+
+      const sender = await User.findById(req.user.id).select("userName profileImg");
+
+      // Prevent self-notification
+      if (post.user._id.toString() !== req.user.id.toString()) {
+        const newNotification = await Notification.create({
+          recipient: post.user._id,
+          sender: req.user.id,
+          type: "like",
+          message: `${sender.userName} liked your post`,
+          relatedItem: post._id,
+          itemType: "post",
+          read: false,
+        });
+
+        // Populate for frontend use
+        const populatedNotification = await Notification.findById(newNotification._id)
+          .populate("sender", "userName profileImg");
+
+        const io = req.app.get("io");
+        
+        if (io) {
+          console.log(post.user);
+          
+          io.to(post.user._id.toString()).emit("new-notification", populatedNotification);
         }
-        await post.save();
-        res.json(post);
-    } catch(err){
-        res.status(500).json({message:err.message});
+      }
     }
+
+    await post.save();
+    res.json(post);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
+
 
 export const addComment = asyncHandler(async (req, res) => {
   try {
     const { text } = req.body;
-    if (!text) return res.status(400).json({ message: 'Comment text is required' });
-    const post = await Post.findById(req.params.id);
-    if (!post) return res.status(404).json({ message: 'Post not found' });
+    if (!text) return res.status(400).json({ message: "Comment text is required" });
+
+    const post = await Post.findById(req.params.id).populate("user", "userName profileImg");
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
     post.comments.push({ user: req.user.id, text });
     await post.save();
+
+    const sender = await User.findById(req.user.id).select("userName profileImg");
+
+    // Notify post owner (not self)
+    if (post.user._id.toString() !== req.user.id.toString()) {
+      const newNotification = await Notification.create({
+        recipient: post.user._id,
+        sender: req.user.id,
+        type: "comment",
+        message: `${sender.userName} commented on your post`,
+        relatedItem: post._id,
+        itemType: "post",
+        read: false,
+      });
+
+      const populatedNotification = await Notification.findById(newNotification._id)
+        .populate("sender", "userName profileImg");
+
+      const io = req.app.get("io");
+      if (io) {
+        io.to(post.user._id.toString()).emit("new-notification", populatedNotification);
+      }
+    }
+
     const populatedPost = await Post.findById(req.params.id)
-      .populate('user', 'userName profileImg isSubscribed')
-      .populate('comments.user', 'userName profileImg isSubscribed');
+      .populate("user", "userName profileImg isSubscribed")
+      .populate("comments.user", "userName profileImg isSubscribed");
+
     res.json({
       ...populatedPost.toObject(),
       isOwner: post.user.toString() === req.user._id.toString(),
@@ -150,6 +237,7 @@ export const addComment = asyncHandler(async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
 
 export const updateComment = asyncHandler(async (req, res) => {
   try {

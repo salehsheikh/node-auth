@@ -12,8 +12,8 @@ import {
  
 } from 'react-icons/fi';
 import { IoIosNotifications } from "react-icons/io";
-import { useSocket } from '../contexts/SocketContext';
 import { useRouter } from 'next/navigation';
+import { useSocket } from '../contexts/SocketContext';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -21,7 +21,11 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router =useRouter();
  
-const { notifications, clearNotifications } = useSocket();
+const {  notifications, 
+    unreadCount, 
+    clearNotifications, 
+    markNotificationAsRead, 
+    markAllAsRead  } = useSocket();
  
 
 const [showNotifications, setShowNotifications] = useState(false);
@@ -63,64 +67,84 @@ useEffect(() => {
               Upgrade
             </Link>
 
-            {/* Notification Bell */}
+       {/* Notification Bell */}
           <div className="relative notification-container z-50">
-  <button
-    onClick={() => setShowNotifications(!showNotifications)}
-    className="bg-[#C5A713] p-3 rounded-full hover:bg-[#e0c234] transition cursor-pointer"
-  >
-    <IoIosNotifications className="text-white text-xl" />
-    {notifications.length > 0 && (
-      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-        {notifications.length}
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="bg-[#C5A713] p-3 rounded-full hover:bg-[#e0c234] transition cursor-pointer"
+            >
+              <IoIosNotifications className="text-white text-xl" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-[#1a1a1a] rounded-lg shadow-lg border border-gray-700 overflow-hidden">
+                {/* Header */}
+                <div className="p-3 border-b border-gray-700 flex justify-between items-center">
+                  <h3 className="font-semibold text-white">Notifications</h3>
+                  <div className="space-x-2">
+                    {notifications.length > 0 && (
+                      <>
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-xs text-blue-400 hover:text-blue-300"
+                        >
+                          Mark all as read
+                        </button>
+                        <button
+                          onClick={clearNotifications}
+                          className="text-xs text-red-400 hover:text-red-300"
+                        >
+                          Clear all
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* List */}
+                <div className="max-h-80 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <p className="p-4 text-center text-gray-400">No notifications</p>
+                  ) : (
+                    notifications.map((notification) => (
+                      <div
+                        key={notification._id}
+                        onClick={() => markNotificationAsRead(notification._id)}
+                        className={`p-3 border-b border-gray-700 hover:bg-gray-800 transition cursor-pointer ${
+                          notification.read ? "opacity-70" : "bg-gray-900"
+                        }`}
+                      >
+                        <p className="text-sm text-white">{notification.message}</p>
+                        {notification.type === "story" && (
+                          <span className="inline-block px-2 py-1 text-xs bg-purple-600 rounded-full mt-1">
+                            Story
+                          </span>
+                        )}
+                        {notification.type === "post" && (
+                          <span className="inline-block px-2 py-1 text-xs bg-blue-600 rounded-full mt-1">
+                            Post
+                          </span>
+                        )}
+                        {notification.type === "follow" && ( 
+      <span className="inline-block px-2 py-1 text-xs bg-green-600 rounded-full mt-1">
+        Follow
       </span>
     )}
-  </button>
-
-  {showNotifications && (
-    <div className="absolute right-0 mt-2 w-80 bg-[#1a1a1a] rounded-lg shadow-lg border border-gray-700 overflow-hidden">
-      <div className="p-3 border-b border-gray-700 flex justify-between items-center">
-        <h3 className="font-semibold">Notifications</h3>
-        {notifications.length > 0 && (
-          <button
-            onClick={clearNotifications}
-            className="text-xs text-blue-400 hover:text-blue-300"
-          >
-            Clear all
-          </button>
-        )}
-      </div>
-      <div className="max-h-80 overflow-y-auto">
-        {notifications.length === 0 ? (
-          <p className="p-4 text-center text-gray-400">No notifications</p>
-        ) : (
-          notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className="p-3 border-b border-gray-700 hover:bg-gray-800 transition"
-            >
-              <p className="text-sm">{notification.message}</p>
-              {notification.type === "story" && (
-                <span className="inline-block px-2 py-1 text-xs bg-purple-600 rounded-full mt-1">
-                  Story
-                </span>
-              )}
-              {notification.type === "post" && (
-                <span className="inline-block px-2 py-1 text-xs bg-blue-600 rounded-full mt-1">
-                  Post
-                </span>
-              )}
-              <p className="text-xs text-gray-400 mt-1">
-                {new Date(notification.timestamp).toLocaleTimeString()}
-              </p>
-            </div>
-          ))
-        )}
-      </div>
-      
-    </div>
-  )}
-</div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(notification.createdAt || notification.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
 
      
