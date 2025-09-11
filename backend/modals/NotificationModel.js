@@ -37,7 +37,7 @@ const notificationSchema=new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-});
+} , { timestamps: true });
 
 
 notificationSchema.index({ recipient: 1, createdAt: -1 });

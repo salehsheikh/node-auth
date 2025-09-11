@@ -123,14 +123,13 @@ export const SocketProvider = ({ children }) => {
         await fetchNotifications();
       });
 
-     newSocket.on("new-notification", async (notification) => {
-  console.log("Received new-notification:", notification);
-
-  // Update state instantly
+newSocket.on("new-notification", (notification) => {
+  console.log("🔥 Got new notification", notification);
   setNotifications((prev) => [notification, ...prev]);
   setUnreadCount((prev) => prev + 1);
-  
 });
+
+
 
 
 
@@ -140,9 +139,14 @@ export const SocketProvider = ({ children }) => {
       });
 
       // Handle connection events
-      newSocket.on('connect', () => {
-        console.log('Socket connected successfully');
-      });
+      newSocket.on("connect", () => {
+  console.log("User connected:", newSocket.id);
+
+  if (user?._id) {
+    newSocket.emit("join", user._id);  // make sure this runs
+  }
+});
+
 
       newSocket.on('disconnect', () => {
         console.log('Socket disconnected');

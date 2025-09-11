@@ -1,7 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Notification from '../modals/NotificationModel.js';
 
-// GET /api/notifications - Get user notifications
 const getNotifications = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 20;

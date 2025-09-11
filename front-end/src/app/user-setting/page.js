@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useAuth } from "@/app/contexts/AuthContext";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { FaCheckCircle, FaUser, FaEnvelope, FaMapMarkerAlt, FaBriefcase, FaInfoCircle } from "react-icons/fa";
-import FollowButton from "../components/FollowButton";
 
 const InputField = ({ label, type = "text", placeholder, value, onChange, name, disabled = false, icon }) => (
   <div className="w-full text-sm">
@@ -206,6 +205,16 @@ const UserSettings = () => {
                 </div>
                 <p className="text-gray-400 capitalize">{user?.role}</p>
                 <p className="text-gray-400 text-sm">{user?.email}</p>
+              <div className="flex items-center gap-6 mt-2">
+    <div className="text-center">
+      <p className="text-lg font-semibold">{user?.follower}</p>
+      <p className="text-gray-400 text-sm">Followers</p>
+    </div>
+    <div className="text-center">
+      <p className="text-lg font-semibold">{user?.following}</p>
+      <p className="text-gray-400 text-sm">Following</p>
+    </div>
+  </div>
               </div>
             </div>
           </div>

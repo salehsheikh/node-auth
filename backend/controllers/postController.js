@@ -154,29 +154,30 @@ export const toggleLike = async (req, res) => {
       const sender = await User.findById(req.user.id).select("userName profileImg");
 
       // Prevent self-notification
-      if (post.user._id.toString() !== req.user.id.toString()) {
-        const newNotification = await Notification.create({
-          recipient: post.user._id,
-          sender: req.user.id,
-          type: "like",
-          message: `${sender.userName} liked your post`,
-          relatedItem: post._id,
-          itemType: "post",
-          read: false,
-        });
+   if (post.user._id.toString() !== req.user.id.toString()) {
+  const newNotification = await Notification.create({
+    recipient: post.user._id,
+    sender: req.user.id,
+    type: "like",
+    message: `${sender.userName} liked your post`,
+    relatedItem: post._id,
+    itemType: "post",
+    read: false,
+  });
 
-        // Populate for frontend use
-        const populatedNotification = await Notification.findById(newNotification._id)
-          .populate("sender", "userName profileImg");
+const populatedNotification = await Notification.findById(newNotification._id)
+  .populate("sender", "userName profileImg")
+  .lean();   // <--- plain object
 
-        const io = req.app.get("io");
-        
-        if (io) {
-          console.log(post.user);
-          
-          io.to(post.user._id.toString()).emit("new-notification", populatedNotification);
-        }
-      }
+const io = req.app.get("io");
+if (io) {
+  io.to(`user-${post.user._id.toString()}`)
+    .emit("new-notification", populatedNotification);
+}
+
+
+}
+
     }
 
     await post.save();
@@ -213,12 +214,12 @@ export const addComment = asyncHandler(async (req, res) => {
       });
 
       const populatedNotification = await Notification.findById(newNotification._id)
-        .populate("sender", "userName profileImg");
+        .populate("sender", "userName profileImg")
+        .lean();
 
       const io = req.app.get("io");
       if (io) {
-        io.to(post.user._id.toString()).emit("new-notification", populatedNotification);
-      }
+          io.to(`user-${post.user._id.toString()}`).emit("new-notification", populatedNotification);      }
     }
 
     const populatedPost = await Post.findById(req.params.id)

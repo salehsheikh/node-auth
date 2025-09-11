@@ -218,7 +218,9 @@ export const authCheck = (asyncHandler(async (req, res) => {
       bio: user.bio,
       isSubscribed: user.isSubscribed || false, 
         subscriptionPlan: user.subscriptionPlan || null, 
-        subscriptionEnd: user.subscriptionEnd || null 
+        subscriptionEnd: user.subscriptionEnd || null ,
+        follower:user.followersCount || null,
+        following:user.followingCount || null,
     }
   });
 }));
@@ -280,7 +282,9 @@ export const loginUser = asyncHandler(async (req, res) => {
       profileImg: user.profileImg,
       location: user.location,
       bio: user.bio,
-      isVerified: user.isVerified
+      isVerified: user.isVerified,
+       follower:user.followersCount || null,
+        following:user.followingCount || null,
     }
   });
 });
