@@ -237,14 +237,26 @@ const getFollowing = asyncHandler(async (req, res) => {
   });
 });
 
-const checkFollowStatus= asyncHandler( async (req,res)=>{
-    const {userId}= req.params;
-    const followerId= req.user._id;
-    const isFollowing= await Follow.isFollowing(followerId , userId);
-    res.json({
-        succes:true,
-        isFollowing: !!isFollowing
-    });
+// Get comprehensive follow status
+const checkFollowStatus = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const currentUserId = req.user._id;
+  
+  const [isFollowing, isFollowedBy] = await Promise.all([
+    Follow.exists({
+      follower: currentUserId,
+      following: userId
+    }),
+    Follow.exists({
+      follower: userId,
+      following: currentUserId
+    })
+  ]);
+  
+  res.json({ 
+    isFollowing: !!isFollowing, 
+    isFollowedBy: !!isFollowedBy 
+  });
 });
 
 const getSuggestions = asyncHandler(async (req, res) => {
@@ -259,7 +271,7 @@ const getSuggestions = asyncHandler(async (req, res) => {
     _id: { $nin: [myId, ...followingIds] }
   })
     .select("userName profileImg isVerified")
-    .limit(10); // limit suggestions
+    .limit(10); 
 
   res.json({ success: true, users });
 });

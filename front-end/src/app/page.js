@@ -3,12 +3,15 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { FiHome, FiUser, FiSettings, FiLogOut, FiArrowRight, FiMessageCircle, FiImage, FiUsers, FiStar } from 'react-icons/fi';
+import { useSocket } from './contexts/SocketContext';
+import { usePosts } from './contexts/PostContext';
 
 const Home = () => {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-
+const {  notifications,  } = useSocket();
+const {posts}= usePosts();
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -65,7 +68,7 @@ const Home = () => {
     {
       title: "Explore",
       icon: <FiHome className="text-gray-600" />,
-      action: () => router.push('/')
+      action: () => router.push('/posts')
     }
   ];
 
@@ -125,21 +128,21 @@ const Home = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <p className="text-sm text-blue-600">New notifications</p>
-                  <p className="text-2xl font-bold text-gray-800">3</p>
+                  <p className="text-2xl font-bold text-gray-800">{notifications.length}</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-sm text-green-600">Friend requests</p>
-                  <p className="text-2xl font-bold text-gray-800">2</p>
+                  <p className="text-sm text-green-600">Followers</p>
+                  <p className="text-2xl font-bold text-gray-800">{user?.follower || 0}</p>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
-                  <p className="text-sm text-purple-600">Messages</p>
-                  <p className="text-2xl font-bold text-gray-800">5</p>
+                  <p className="text-sm text-purple-600">Posts</p>
+                  <p className="text-2xl font-bold text-gray-800">{posts?.length || 0}</p>
                 </div>
               </div>
 
               <button 
                 onClick={() => router.push('/posts')}
-                className="flex items-center space-x-2 text-blue-500 hover:text-blue-700 transition-colors"
+                className="flex items-center cursor-pointer space-x-2 text-blue-500 hover:text-blue-700 transition-colors"
               >
                 <span>View your feed</span>
                 <FiArrowRight />
@@ -154,7 +157,7 @@ const Home = () => {
                   <button
                     key={index}
                     onClick={action.action}
-                    className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="w-full flex cursor-pointer items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     {action.icon}
                     <span className="text-gray-700">{action.title}</span>

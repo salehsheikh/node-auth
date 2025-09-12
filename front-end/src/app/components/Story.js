@@ -178,7 +178,7 @@ const Story = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold">Stories</h2>
         {!isCreating && (
-          <label className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full cursor-pointer">
+          <label className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full cursor-pointer">
             <FiPlus className="text-white text-xl" />
             <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
           </label>

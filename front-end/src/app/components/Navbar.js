@@ -6,14 +6,17 @@ import { useAuth } from '@/app/contexts/AuthContext';
 import { 
   FiUser, 
   FiLogOut, 
-  FiCreditCard,
   FiX,
   FiMenu,
+  FiCreditCard,
  
 } from 'react-icons/fi';
+import { FaUsers } from "react-icons/fa";
+
 import { IoIosNotifications } from "react-icons/io";
 import { useRouter } from 'next/navigation';
 import { useSocket } from '../contexts/SocketContext';
+import { MdVerified } from "react-icons/md";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -51,27 +54,37 @@ useEffect(() => {
         <div className="flex justify-between items-center  h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-white font-bold text-xl">
-              Socialoo
-            </Link>
+              <Link href="/" className="flex items-center gap-2 text-white font-bold text-xl">
+    <div className="w-8 h-8 bg-gradient-to-r from-blue-500  to-purple-600 rounded-lg flex items-center justify-center">
+      <span className="text-white font-bold text-sm">S</span>
+    </div>
+    <span className='uppercase'>ocialoo</span>
+  </Link>
           </div>
 
          
 
           <div className="flex items-center space-x-5">
             <Link 
+              href="/suggestion" 
+              className="hidden md:flex items-center  text-white px-4 py-2 rounded-full text-sm font-medium hover:opacity-90 transition"
+            >
+            <FaUsers className='size-5' />
+
+            </Link>
+            <Link 
               href="/subscribe" 
               className="hidden md:flex items-center bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:opacity-90 transition"
             >
-              <FiCreditCard className="mr-2" />
-              Upgrade
+              <MdVerified className="mr-2 size-5" />
+            Verify
             </Link>
 
        {/* Notification Bell */}
           <div className="relative notification-container z-50">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="bg-[#C5A713] p-3 rounded-full hover:bg-[#e0c234] transition cursor-pointer"
+              className="bg-amber-500 p-3 rounded-full hover:bg-amber-600 transition cursor-pointer"
             >
               <IoIosNotifications className="text-white text-xl" />
               {unreadCount > 0 && (
