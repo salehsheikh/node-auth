@@ -71,7 +71,7 @@ default:0
     },
   profileImg: {
     type: String,
-    default: '/images/user.png',
+    default: '/images/usersaleh.jpg',
     validate: {
       validator: (value) => {
         try {
