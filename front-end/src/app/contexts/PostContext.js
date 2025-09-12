@@ -20,7 +20,7 @@ export const PostProvider = ({ children }) => {
       fetchPosts();
     }
   }, [user, authLoading]);
-
+//
   const fetchPosts = async () => {
     setIsLoading(true);
     setError(null);
